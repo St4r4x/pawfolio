@@ -3,14 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../date_only.dart';
 import '../../models/pet.dart';
+import '../../notifications/reminder_scheduler.dart';
 import '../../providers/pets_provider.dart';
+import '../../providers/reminders_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(upcomingRemindersProvider, (previous, next) {
+      next.whenData((items) => ref.read(reminderSchedulerProvider).scheduleAll(items));
+    });
+    final upcomingAsync = ref.watch(upcomingRemindersProvider);
     final petsAsync = ref.watch(petsProvider);
 
     return Scaffold(
@@ -25,38 +32,65 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(petsProvider.future),
-        child: petsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Erreur: $error'),
-                TextButton(onPressed: () => ref.invalidate(petsProvider), child: const Text('Réessayer')),
-              ],
+        onRefresh: () async {
+          ref.invalidate(petsProvider);
+          ref.invalidate(upcomingRemindersProvider);
+        },
+        child: ListView(
+          children: [
+            upcomingAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (items) => items.isEmpty
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text('À venir', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          for (final item in items.take(3))
+                            ListTile(
+                              dense: true,
+                              title: Text('${item.petName} · ${item.label}'),
+                              subtitle: Text(dateOnly(item.dueDate)),
+                            ),
+                          const Divider(),
+                        ],
+                      ),
+                    ),
             ),
-          ),
-          data: (pets) => pets.isEmpty
-              ? ListView(
-                  children: const [
-                    Padding(
+            petsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Erreur: $error'),
+                    TextButton(onPressed: () => ref.invalidate(petsProvider), child: const Text('Réessayer')),
+                  ],
+                ),
+              ),
+              data: (pets) => pets.isEmpty
+                  ? const Padding(
                       padding: EdgeInsets.all(32),
                       child: Center(child: Text('Aucun animal pour le moment')),
+                    )
+                  : Column(
+                      children: [
+                        for (final pet in pets)
+                          ListTile(
+                            title: Text(pet.name),
+                            subtitle: Text(pet.species),
+                            onTap: () => context.push('/pets/${pet.id}'),
+                          ),
+                      ],
                     ),
-                  ],
-                )
-              : ListView.builder(
-                  itemCount: pets.length,
-                  itemBuilder: (context, index) {
-                    final pet = pets[index];
-                    return ListTile(
-                      title: Text(pet.name),
-                      subtitle: Text(pet.species),
-                      onTap: () => context.push('/pets/${pet.id}'),
-                    );
-                  },
-                ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(

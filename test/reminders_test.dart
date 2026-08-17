@@ -1,0 +1,24 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pawfolio/reminders.dart';
+
+void main() {
+  final now = DateTime(2024, 6, 15);
+
+  test('filters out due dates strictly before today', () {
+    final items = [
+      DueItem(petId: 'p1', petName: 'Rex', label: 'Rage', dueDate: DateTime(2024, 6, 14)),
+      DueItem(petId: 'p1', petName: 'Rex', label: 'Vermifuge', dueDate: DateTime(2024, 6, 15)),
+    ];
+    final result = sortUpcoming(items, now: now);
+    expect(result.map((item) => item.label), ['Vermifuge']);
+  });
+
+  test('sorts remaining items by due date ascending', () {
+    final items = [
+      DueItem(petId: 'p1', petName: 'Rex', label: 'B', dueDate: DateTime(2024, 7, 1)),
+      DueItem(petId: 'p1', petName: 'Rex', label: 'A', dueDate: DateTime(2024, 6, 20)),
+    ];
+    final result = sortUpcoming(items, now: now);
+    expect(result.map((item) => item.label), ['A', 'B']);
+  });
+}
