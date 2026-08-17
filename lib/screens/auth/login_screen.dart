@@ -27,6 +27,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } on AuthException catch (e) {
       setState(() => _error = e.message);
+    } catch (e) {
+      setState(() => _error = 'Impossible de contacter le serveur. Vérifie ta connexion.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
