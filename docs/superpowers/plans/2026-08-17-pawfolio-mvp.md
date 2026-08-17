@@ -434,11 +434,13 @@ git commit -m "feat: wire Supabase client, Riverpod, and go_router skeleton"
 
 **Files:**
 - Create: `lib/auth_redirect.dart`, `lib/screens/auth/login_screen.dart`, `lib/screens/auth/signup_screen.dart`, `test/auth_redirect_test.dart`
-- Modify: `lib/app_router.dart`
+- Modify: `lib/app_router.dart`, `test/app_smoke_test.dart`
 
 **Interfaces:**
 - Consumes: `appRouterProvider` from Task 3.
 - Produces: `authRedirect({required bool loggedIn, required String location})` returning `String?`, used by the router.
+
+**Addendum (discovered during implementation):** Step 7's router reads `Supabase.instance.client.auth.currentSession` at build time, which requires `Supabase.initialize()` to have run — Task 3's `test/app_smoke_test.dart` pumps `PawfolioApp` directly without ever calling it, so it now crashes on an uninitialized-client assertion. Fixing this is in scope for this task (see Step 8 below) since this task is what introduces the dependency; the fix updates the smoke test, not the router.
 
 - [ ] **Step 1: Write the failing test for the redirect logic**
 
@@ -698,7 +700,35 @@ class GoRouterRefreshStream extends ChangeNotifier {
 }
 ```
 
-- [ ] **Step 8: Run the full test suite and commit**
+- [ ] **Step 8: Fix `test/app_smoke_test.dart` for the now-auth-gated router**
+
+The router now redirects an unauthenticated user away from `/` to `/login`, so the smoke test's original "shows Pawfolio" assertion is stale — with no session, booting the app correctly lands on `LoginScreen`, not `HomeScreen`. Update the test to assert the new, correct behavior instead of working around it:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pawfolio/main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+void main() {
+  setUpAll(() async {
+    await Supabase.initialize(
+      url: 'http://127.0.0.1:54321',
+      anonKey: 'test-anon-key',
+    );
+  });
+
+  testWidgets('app boots with no session and shows the login screen', (tester) async {
+    await tester.pumpWidget(const ProviderScope(child: PawfolioApp()));
+    await tester.pumpAndSettle();
+    expect(find.text('Connexion'), findsOneWidget);
+  });
+}
+```
+
+`Supabase.initialize` with a fake local URL/key does not require network access for this test: it only sets up the client and local session storage, and the redirect this test exercises reads `currentSession` synchronously (no session was ever persisted, so it's `null`) — no real HTTP call happens before the assertion runs.
+
+- [ ] **Step 9: Run the full test suite and commit**
 
 ```bash
 flutter test
