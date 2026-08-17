@@ -142,6 +142,7 @@ android/app/release
 supabase/.branches/
 supabase/.temp/
 .env.local
+.superpowers/
 EOF
 git add -A
 git commit -m "chore: scaffold Flutter Android project"
