@@ -8,6 +8,7 @@ import 'package:pawfolio/providers/weight_entries_provider.dart';
 import 'package:pawfolio/providers/treatments_provider.dart';
 import 'package:pawfolio/providers/vet_visits_provider.dart';
 import 'package:pawfolio/screens/pet_detail/pet_detail_screen.dart';
+import 'package:pawfolio/widgets/pet_avatar.dart';
 
 void main() {
   testWidgets("shows the pet's name, species, and breed in the header", (tester) async {
@@ -32,5 +33,6 @@ void main() {
     expect(find.text('Rex'), findsOneWidget);
     expect(find.text('Chien'), findsOneWidget);
     expect(find.text('Labrador'), findsOneWidget);
+    expect(find.byType(PetAvatar), findsOneWidget);
   });
 }

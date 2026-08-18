@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../date_only.dart';
 import '../../models/pet.dart';
@@ -10,6 +9,8 @@ import '../../providers/pets_provider.dart';
 import '../../providers/reminders_provider.dart';
 import '../../reminders.dart';
 import '../../theme.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/pet_avatar.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -22,23 +23,19 @@ class HomeScreen extends ConsumerWidget {
     final upcomingAsync = ref.watch(upcomingRemindersProvider);
     final petsAsync = ref.watch(petsProvider);
 
+    final earliestReminderByPet = <String, DueItem>{};
+    upcomingAsync.whenData((items) {
+      for (final item in items) {
+        earliestReminderByPet.putIfAbsent(item.petId, () => item);
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.pets),
-            SizedBox(width: 8),
-            Text('Pawfolio'),
-          ],
+          children: const [Icon(Icons.pets), SizedBox(width: 8), Text('Pawfolio')],
         ),
-        actions: [
-          IconButton(
-            onPressed: () => Supabase.instance.client.auth.signOut(),
-            icon: const Icon(Icons.logout),
-            tooltip: 'Se déconnecter',
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -57,9 +54,18 @@ class HomeScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('À venir', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('À venir', style: TextStyle(fontWeight: FontWeight.bold)),
+                                TextButton(
+                                  onPressed: () => context.push('/reminders'),
+                                  child: const Text('Voir tout'),
+                                ),
+                              ],
+                            ),
                           ),
                           for (final item in items.take(3))
                             ListTile(
@@ -67,7 +73,7 @@ class HomeScreen extends ConsumerWidget {
                               leading: Icon(
                                 Icons.circle,
                                 size: 12,
-                                color: _urgencyColor(reminderUrgency(item.dueDate)),
+                                color: urgencyColor(reminderUrgency(item.dueDate)),
                               ),
                               title: Text('${item.petName} · ${item.label}'),
                               subtitle: Text(dateOnly(item.dueDate)),
@@ -89,35 +95,43 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               data: (pets) => pets.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.pets, size: 48, color: AppColors.muted),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Aucun animal pour le moment',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Ajoute ton premier animal avec le bouton + ci-dessous.',
-                            style: TextStyle(color: AppColors.muted),
-                          ),
-                        ],
-                      ),
+                  ? const EmptyState(
+                      illustration: Icon(Icons.pets, size: 64, color: AppColors.muted),
+                      title: 'Aucun animal pour le moment',
+                      subtitle: 'Ajoute ton premier animal avec le bouton + ci-dessous.',
                     )
                   : Column(
                       children: [
                         for (final pet in pets)
-                          ListTile(
-                            title: Text(pet.name),
-                            subtitle: Text(pet.species),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () => _showAddPetSheet(context, ref, existing: pet),
+                          Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: ListTile(
+                              leading: PetAvatar(species: pet.species),
+                              title: Text(pet.name),
+                              subtitle: Text(pet.species),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (earliestReminderByPet[pet.id] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Chip(
+                                        label: Text(earliestReminderByPet[pet.id]!.label),
+                                        backgroundColor: urgencyColor(
+                                          reminderUrgency(earliestReminderByPet[pet.id]!.dueDate),
+                                        ),
+                                        labelStyle: const TextStyle(color: Colors.white, fontSize: 11),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () => _showAddPetSheet(context, ref, existing: pet),
+                                  ),
+                                ],
+                              ),
+                              onTap: () => context.push('/pets/${pet.id}'),
                             ),
-                            onTap: () => context.push('/pets/${pet.id}'),
                           ),
                       ],
                     ),
@@ -195,16 +209,5 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-}
-
-Color _urgencyColor(ReminderUrgency urgency) {
-  switch (urgency) {
-    case ReminderUrgency.today:
-      return AppColors.error;
-    case ReminderUrgency.soon:
-      return AppColors.warningDueSoon;
-    case ReminderUrgency.later:
-      return AppColors.muted;
   }
 }

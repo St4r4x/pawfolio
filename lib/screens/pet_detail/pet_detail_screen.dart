@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../date_only.dart';
 import '../../models/pet.dart';
 import '../../providers/pets_provider.dart';
+import '../../theme.dart';
+import '../../widgets/pet_avatar.dart';
 import 'widgets/treatments_tab.dart';
 import 'widgets/vaccinations_tab.dart';
 import 'widgets/vet_visits_tab.dart';
@@ -36,9 +38,20 @@ class PetDetailScreen extends ConsumerWidget {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(pet?.name ?? 'Animal'),
-          bottom: const TabBar(
-            tabs: [
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (pet != null) ...[
+                PetAvatar(species: pet.species, radius: 16),
+                const SizedBox(width: 8),
+              ],
+              Text(pet?.name ?? 'Animal'),
+            ],
+          ),
+          bottom: TabBar(
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 3,
+            tabs: const [
               Tab(text: 'Vaccins'),
               Tab(text: 'Poids'),
               Tab(text: 'Traitements'),
