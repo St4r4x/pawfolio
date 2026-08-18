@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import 'theme.dart';
+
 class DueItem {
   const DueItem({
     required this.petId,
@@ -29,4 +33,15 @@ ReminderUrgency reminderUrgency(DateTime dueDate, {DateTime? now}) {
   if (daysUntil <= 0) return ReminderUrgency.today;
   if (daysUntil <= 7) return ReminderUrgency.soon;
   return ReminderUrgency.later;
+}
+
+Color urgencyColor(ReminderUrgency urgency) {
+  switch (urgency) {
+    case ReminderUrgency.today:
+      return AppColors.error;
+    case ReminderUrgency.soon:
+      return AppColors.warningDueSoon;
+    case ReminderUrgency.later:
+      return AppColors.muted;
+  }
 }

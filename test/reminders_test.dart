@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawfolio/reminders.dart';
+import 'package:pawfolio/theme.dart';
 
 void main() {
   final now = DateTime(2024, 6, 15);
@@ -32,5 +33,11 @@ void main() {
 
   test('reminderUrgency classifies an item due after 7 days as later', () {
     expect(reminderUrgency(DateTime(2024, 6, 25), now: now), ReminderUrgency.later);
+  });
+
+  test('urgencyColor maps each urgency to its token', () {
+    expect(urgencyColor(ReminderUrgency.today), AppColors.error);
+    expect(urgencyColor(ReminderUrgency.soon), AppColors.warningDueSoon);
+    expect(urgencyColor(ReminderUrgency.later), AppColors.muted);
   });
 }
