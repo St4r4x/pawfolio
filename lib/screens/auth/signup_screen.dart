@@ -26,6 +26,13 @@ class _SignupScreenState extends State<SignupScreen> {
         password: _passwordController.text,
       );
       if (mounted) context.go('/');
+    } on AuthRetryableFetchException {
+      // gotrue wraps raw network failures (e.g. no connectivity) as a
+      // *subtype* of AuthException with a raw technical message (see
+      // gotrue's GotrueFetch._handleError) - it must be caught before the
+      // generic `on AuthException` clause below or that clause swallows it
+      // and shows the raw message instead of this friendly one.
+      setState(() => _error = 'Impossible de contacter le serveur. Vérifie ta connexion.');
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
