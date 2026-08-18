@@ -2078,19 +2078,19 @@ to:
                         context: sheetContext,
                         barrierDismissible: false,
                         barrierColor: Colors.transparent,
-                        builder: (dialogContext) => IgnorePointer(
-                          child: Center(
-                            child: Lottie.asset(
-                              'assets/lottie/pet_added.json',
-                              repeat: false,
-                              width: 160,
-                              height: 160,
-                              onLoaded: (composition) => Future.delayed(composition.duration, () {
-                                if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-                              }),
+                        builder: (dialogContext) {
+                          // Fixed timer, not gated on onLoaded/composition.duration: if the
+                          // Lottie asset ever fails to parse, onLoaded never fires and the
+                          // dialog would never close, hanging pumpAndSettle() in tests.
+                          Future.delayed(const Duration(milliseconds: 1200), () {
+                            if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                          });
+                          return IgnorePointer(
+                            child: Center(
+                              child: Lottie.asset('assets/lottie/pet_added.json', repeat: false, width: 160, height: 160),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       );
                     }
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
@@ -2122,19 +2122,18 @@ In `_showAddWeightSheet`'s `FilledButton.onPressed`, after the successful `ref.i
                         context: sheetContext,
                         barrierDismissible: false,
                         barrierColor: Colors.transparent,
-                        builder: (dialogContext) => IgnorePointer(
-                          child: Center(
-                            child: Lottie.asset(
-                              'assets/lottie/entry_saved.json',
-                              repeat: false,
-                              width: 120,
-                              height: 120,
-                              onLoaded: (composition) => Future.delayed(composition.duration, () {
-                                if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-                              }),
+                        builder: (dialogContext) {
+                          // Fixed timer, not gated on onLoaded/composition.duration — see the
+                          // matching note in Task 9 Step 4 (home_screen.dart).
+                          Future.delayed(const Duration(milliseconds: 1200), () {
+                            if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                          });
+                          return IgnorePointer(
+                            child: Center(
+                              child: Lottie.asset('assets/lottie/entry_saved.json', repeat: false, width: 120, height: 120),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       );
                     }
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
