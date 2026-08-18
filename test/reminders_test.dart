@@ -21,4 +21,16 @@ void main() {
     final result = sortUpcoming(items, now: now);
     expect(result.map((item) => item.label), ['A', 'B']);
   });
+
+  test('reminderUrgency classifies a due-today item', () {
+    expect(reminderUrgency(DateTime(2024, 6, 15), now: now), ReminderUrgency.today);
+  });
+
+  test('reminderUrgency classifies an item due within 7 days as soon', () {
+    expect(reminderUrgency(DateTime(2024, 6, 20), now: now), ReminderUrgency.soon);
+  });
+
+  test('reminderUrgency classifies an item due after 7 days as later', () {
+    expect(reminderUrgency(DateTime(2024, 6, 25), now: now), ReminderUrgency.later);
+  });
 }

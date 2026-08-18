@@ -8,6 +8,8 @@ import '../../models/pet.dart';
 import '../../notifications/reminder_scheduler.dart';
 import '../../providers/pets_provider.dart';
 import '../../providers/reminders_provider.dart';
+import '../../reminders.dart';
+import '../../theme.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -22,7 +24,14 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pawfolio'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.pets),
+            SizedBox(width: 8),
+            Text('Pawfolio'),
+          ],
+        ),
         actions: [
           IconButton(
             onPressed: () => Supabase.instance.client.auth.signOut(),
@@ -55,6 +64,11 @@ class HomeScreen extends ConsumerWidget {
                           for (final item in items.take(3))
                             ListTile(
                               dense: true,
+                              leading: Icon(
+                                Icons.circle,
+                                size: 12,
+                                color: _urgencyColor(reminderUrgency(item.dueDate)),
+                              ),
                               title: Text('${item.petName} · ${item.label}'),
                               subtitle: Text(dateOnly(item.dueDate)),
                             ),
@@ -75,9 +89,23 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               data: (pets) => pets.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: Text('Aucun animal pour le moment')),
+                  ? Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.pets, size: 48, color: AppColors.muted),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Aucun animal pour le moment',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Ajoute ton premier animal avec le bouton + ci-dessous.',
+                            style: TextStyle(color: AppColors.muted),
+                          ),
+                        ],
+                      ),
                     )
                   : Column(
                       children: [
@@ -167,5 +195,16 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+Color _urgencyColor(ReminderUrgency urgency) {
+  switch (urgency) {
+    case ReminderUrgency.today:
+      return AppColors.error;
+    case ReminderUrgency.soon:
+      return AppColors.warningDueSoon;
+    case ReminderUrgency.later:
+      return AppColors.muted;
   }
 }
