@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../date_only.dart';
+import '../../motion.dart';
 import '../../providers/reminders_provider.dart';
 import '../../reminders.dart';
 import '../../theme.dart';
@@ -35,12 +37,32 @@ class RemindersScreen extends ConsumerWidget {
             ? EmptyState(
                 illustration: SvgPicture.asset(
                   'assets/illustrations/no_reminders.svg',
-                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.muted,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 title: 'Aucun rappel à venir',
                 subtitle: 'Les vaccins, traitements et visites à venir apparaîtront ici.',
               )
-            : ListView(children: _sections(items).expand((s) => s).toList()),
+            : ListView(
+                children: AnimateList(
+                  interval: AppMotion.durationOrInstant(
+                    context,
+                    AppMotion.staggerStep,
+                  ),
+                  effects: [
+                    FadeEffect(
+                      duration: AppMotion.durationOrInstant(
+                        context,
+                        AppMotion.microDuration,
+                      ),
+                      curve: AppMotion.entranceCurve,
+                    ),
+                  ],
+                  children: _sections(items).expand((s) => s).toList(),
+                ),
+              ),
       ),
     );
   }
@@ -68,11 +90,18 @@ List<List<Widget>> _sections(List<DueItem> items) {
         [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Text(labels[urgency]!, style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              labels[urgency]!,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           for (final item in byUrgency[urgency]!)
             ListTile(
-              leading: Icon(Icons.circle, size: 12, color: urgencyColor(urgency)),
+              leading: Icon(
+                Icons.circle,
+                size: 12,
+                color: urgencyColor(urgency),
+              ),
               title: Text('${item.petName} · ${item.label}'),
               subtitle: Text(dateOnly(item.dueDate)),
             ),

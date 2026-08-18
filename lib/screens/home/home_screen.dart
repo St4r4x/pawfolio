@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../date_only.dart';
 import '../../models/pet.dart';
+import '../../motion.dart';
 import '../../notifications/reminder_scheduler.dart';
 import '../../providers/pets_provider.dart';
 import '../../providers/reminders_provider.dart';
@@ -19,7 +21,9 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen(upcomingRemindersProvider, (previous, next) {
-      next.whenData((items) => ref.read(reminderSchedulerProvider).scheduleAll(items));
+      next.whenData(
+        (items) => ref.read(reminderSchedulerProvider).scheduleAll(items),
+      );
     });
     final upcomingAsync = ref.watch(upcomingRemindersProvider);
     final petsAsync = ref.watch(petsProvider);
@@ -35,7 +39,11 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [Icon(Icons.pets), SizedBox(width: 8), Text('Pawfolio')],
+          children: const [
+            Icon(Icons.pets),
+            SizedBox(width: 8),
+            Text('Pawfolio'),
+          ],
         ),
       ),
       body: RefreshIndicator(
@@ -60,7 +68,10 @@ class HomeScreen extends ConsumerWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('À venir', style: TextStyle(fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'À venir',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                                 TextButton(
                                   onPressed: () => context.push('/reminders'),
                                   child: const Text('Voir tout'),
@@ -74,7 +85,9 @@ class HomeScreen extends ConsumerWidget {
                               leading: Icon(
                                 Icons.circle,
                                 size: 12,
-                                color: urgencyColor(reminderUrgency(item.dueDate)),
+                                color: urgencyColor(
+                                  reminderUrgency(item.dueDate),
+                                ),
                               ),
                               title: Text('${item.petName} · ${item.label}'),
                               subtitle: Text(dateOnly(item.dueDate)),
@@ -91,7 +104,10 @@ class HomeScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Erreur: $error'),
-                    TextButton(onPressed: () => ref.invalidate(petsProvider), child: const Text('Réessayer')),
+                    TextButton(
+                      onPressed: () => ref.invalidate(petsProvider),
+                      child: const Text('Réessayer'),
+                    ),
                   ],
                 ),
               ),
@@ -99,45 +115,90 @@ class HomeScreen extends ConsumerWidget {
                   ? EmptyState(
                       illustration: SvgPicture.asset(
                         'assets/illustrations/no_pets.svg',
-                        colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.muted,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       title: 'Aucun animal pour le moment',
                       subtitle: 'Ajoute ton premier animal avec le bouton + ci-dessous.',
                     )
                   : Column(
-                      children: [
-                        for (final pet in pets)
-                          Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: ListTile(
-                              leading: PetAvatar(species: pet.species),
-                              title: Text(pet.name),
-                              subtitle: Text(pet.species),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (earliestReminderByPet[pet.id] != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 4),
-                                      child: Chip(
-                                        label: Text(earliestReminderByPet[pet.id]!.label),
-                                        backgroundColor: urgencyColor(
-                                          reminderUrgency(earliestReminderByPet[pet.id]!.dueDate),
+                      children: AnimateList(
+                        interval: AppMotion.durationOrInstant(
+                          context,
+                          AppMotion.staggerStep,
+                        ),
+                        effects: [
+                          FadeEffect(
+                            duration: AppMotion.durationOrInstant(
+                              context,
+                              AppMotion.microDuration,
+                            ),
+                            curve: AppMotion.entranceCurve,
+                          ),
+                          SlideEffect(
+                            begin: const Offset(0, 0.08),
+                            end: Offset.zero,
+                            duration: AppMotion.durationOrInstant(
+                              context,
+                              AppMotion.microDuration,
+                            ),
+                            curve: AppMotion.entranceCurve,
+                          ),
+                        ],
+                        children: [
+                          for (final pet in pets)
+                            Card(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              child: ListTile(
+                                leading: PetAvatar(species: pet.species),
+                                title: Text(pet.name),
+                                subtitle: Text(pet.species),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (earliestReminderByPet[pet.id] != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 4,
                                         ),
-                                        labelStyle: const TextStyle(color: Colors.white, fontSize: 11),
-                                        visualDensity: VisualDensity.compact,
+                                        child: Chip(
+                                          label: Text(
+                                            earliestReminderByPet[pet.id]!
+                                                .label,
+                                          ),
+                                          backgroundColor: urgencyColor(
+                                            reminderUrgency(
+                                              earliestReminderByPet[pet.id]!
+                                                  .dueDate,
+                                            ),
+                                          ),
+                                          labelStyle: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                          ),
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                      ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () => _showAddPetSheet(
+                                        context,
+                                        ref,
+                                        existing: pet,
                                       ),
                                     ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () => _showAddPetSheet(context, ref, existing: pet),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                                onTap: () => context.push('/pets/${pet.id}'),
                               ),
-                              onTap: () => context.push('/pets/${pet.id}'),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
             ),
           ],
@@ -167,7 +228,10 @@ class HomeScreen extends ConsumerWidget {
           builder: (sheetContext, setState) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nom')),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Nom'),
+              ),
               DropdownButton<String>(
                 value: species,
                 items: const [
@@ -182,11 +246,20 @@ class HomeScreen extends ConsumerWidget {
                   if (nameController.text.trim().isEmpty) return;
                   try {
                     if (existing == null) {
-                      await ref.read(petsRepositoryProvider).create(
-                            Pet(id: '', ownerId: '', name: nameController.text.trim(), species: species),
+                      await ref
+                          .read(petsRepositoryProvider)
+                          .create(
+                            Pet(
+                              id: '',
+                              ownerId: '',
+                              name: nameController.text.trim(),
+                              species: species,
+                            ),
                           );
                     } else {
-                      await ref.read(petsRepositoryProvider).update(
+                      await ref
+                          .read(petsRepositoryProvider)
+                          .update(
                             Pet(
                               id: existing.id,
                               ownerId: existing.ownerId,
@@ -201,8 +274,9 @@ class HomeScreen extends ConsumerWidget {
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
                     if (sheetContext.mounted) {
-                      ScaffoldMessenger.of(sheetContext)
-                          .showSnackBar(SnackBar(content: Text('Erreur: $error')));
+                      ScaffoldMessenger.of(
+                        sheetContext,
+                      ).showSnackBar(SnackBar(content: Text('Erreur: $error')));
                     }
                   }
                 },
