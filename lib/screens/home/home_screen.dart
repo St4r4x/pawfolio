@@ -14,6 +14,7 @@ import '../../reminders.dart';
 import '../../theme.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/pet_avatar.dart';
+import '../../widgets/species_dropdown.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -232,14 +233,9 @@ class HomeScreen extends ConsumerWidget {
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'Nom'),
               ),
-              DropdownButton<String>(
+              SpeciesDropdown(
                 value: species,
-                items: const [
-                  DropdownMenuItem(value: 'dog', child: Text('Chien')),
-                  DropdownMenuItem(value: 'cat', child: Text('Chat')),
-                  DropdownMenuItem(value: 'other', child: Text('Autre')),
-                ],
-                onChanged: (value) => setState(() => species = value!),
+                onChanged: (value) => setState(() => species = value),
               ),
               FilledButton(
                 onPressed: () async {

@@ -3,6 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pawfolio/screens/auth/login_screen.dart';
 
 void main() {
+  testWidgets('shows the slogan and wraps the form in a centered card', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+
+    expect(find.text('Le carnet de santé de vos compagnons poilus.'), findsOneWidget);
+    expect(find.byType(Card), findsOneWidget);
+  });
+
   testWidgets('toggles password visibility', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
 

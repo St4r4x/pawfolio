@@ -17,4 +17,12 @@ void main() {
   test('no redirect when logged out and already on the signup screen', () {
     expect(authRedirect(loggedIn: false, location: '/signup'), isNull);
   });
+
+  test('no redirect when logged out and already on the forgot-password screen', () {
+    expect(authRedirect(loggedIn: false, location: '/forgot-password'), isNull);
+  });
+
+  test('redirects to home when logged in and on the forgot-password screen', () {
+    expect(authRedirect(loggedIn: true, location: '/forgot-password'), '/');
+  });
 }

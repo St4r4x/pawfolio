@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Centered card layout and a slogan on the login and signup screens.
+- Forgot-password screen, wired to Supabase Auth's password reset email.
+- Onboarding flow after signup: an optional first-name step, then a
+  skippable first-pet creation step, replacing the empty Home landing.
 - App-wide theme with brand colors and Manrope typography (`lib/theme.dart`).
 - Friendly, French-translated messages for known Supabase auth errors.
 - Inline email/password validation and a password-visibility toggle on the

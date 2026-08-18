@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth_error_message.dart';
-import '../../theme.dart';
+import '../../email_validation.dart';
+import '../../widgets/auth_brand_header.dart';
+import '../../widgets/auth_card.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,16 +46,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   bool _validateEmail() {
-    final email = _emailController.text.trim();
-    final valid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
-    setState(() => _emailError = valid ? null : 'Entre une adresse email valide.');
+    final valid = isValidEmail(_emailController.text);
+    setState(
+      () => _emailError = valid ? null : 'Entre une adresse email valide.',
+    );
     return valid;
   }
 
   bool _validatePassword() {
     final valid = _passwordController.text.length >= 6;
     setState(
-      () => _passwordError = valid ? null : 'Le mot de passe doit contenir au moins 6 caractères.',
+      () => _passwordError = valid
+          ? null
+          : 'Le mot de passe doit contenir au moins 6 caractères.',
     );
     return valid;
   }
@@ -87,56 +92,71 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Connexion')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.pets, size: 48, color: AppColors.primary),
-            const SizedBox(height: 8),
-            Text('Pawfolio', style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _emailController,
-              focusNode: _emailFocus,
-              decoration: InputDecoration(labelText: 'Email', errorText: _emailError),
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.email],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _passwordController,
-              focusNode: _passwordFocus,
-              decoration: InputDecoration(
-                labelText: 'Mot de passe',
-                errorText: _passwordError,
-                suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                ),
-              ),
-              obscureText: _obscurePassword,
-              autofillHints: const [AutofillHints.password],
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            ],
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _loading ? null : _submit,
-              child: _loading
-                  ? const SizedBox(
-                      width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Se connecter'),
-            ),
-            TextButton(
-              onPressed: () => context.push('/signup'),
-              child: const Text('Créer un compte'),
-            ),
-          ],
+      body: AuthCard(child: _buildForm(context)),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const AuthBrandHeader(),
+        const SizedBox(height: 32),
+        TextField(
+          controller: _emailController,
+          focusNode: _emailFocus,
+          decoration: InputDecoration(
+            labelText: 'Email',
+            errorText: _emailError,
+          ),
+          keyboardType: TextInputType.emailAddress,
+          autofillHints: const [AutofillHints.email],
         ),
-      ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _passwordController,
+          focusNode: _passwordFocus,
+          decoration: InputDecoration(
+            labelText: 'Mot de passe',
+            errorText: _passwordError,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+            ),
+          ),
+          obscureText: _obscurePassword,
+          autofillHints: const [AutofillHints.password],
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ],
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _loading ? null : _submit,
+          child: _loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Se connecter'),
+        ),
+        TextButton(
+          onPressed: () => context.push('/forgot-password'),
+          child: const Text('Mot de passe oublié ?'),
+        ),
+        TextButton(
+          onPressed: () => context.push('/signup'),
+          child: const Text('Créer un compte'),
+        ),
+      ],
     );
   }
 }

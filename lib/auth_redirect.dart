@@ -1,6 +1,9 @@
 String? authRedirect({required bool loggedIn, required String location}) {
-  final loggingIn = location == '/login' || location == '/signup';
-  if (!loggedIn && !loggingIn) return '/login';
-  if (loggedIn && loggingIn) return '/';
+  final publicAuthRoute =
+      location == '/login' ||
+      location == '/signup' ||
+      location == '/forgot-password';
+  if (!loggedIn && !publicAuthRoute) return '/login';
+  if (loggedIn && publicAuthRoute) return '/';
   return null;
 }
