@@ -28,6 +28,13 @@ class FakePetsRepository implements PetsRepository {
     pets.add(created);
     return created;
   }
+
+  @override
+  Future<Pet> update(Pet pet) async {
+    final index = pets.indexWhere((p) => p.id == pet.id);
+    if (index != -1) pets[index] = pet;
+    return pet;
+  }
 }
 
 class FakeVaccinationsRepository implements VaccinationsRepository {

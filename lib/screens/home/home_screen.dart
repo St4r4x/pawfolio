@@ -85,6 +85,10 @@ class HomeScreen extends ConsumerWidget {
                           ListTile(
                             title: Text(pet.name),
                             subtitle: Text(pet.species),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => _showAddPetSheet(context, ref, existing: pet),
+                            ),
                             onTap: () => context.push('/pets/${pet.id}'),
                           ),
                       ],
@@ -100,9 +104,9 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddPetSheet(BuildContext context, WidgetRef ref) {
-    final nameController = TextEditingController();
-    String species = 'dog';
+  void _showAddPetSheet(BuildContext context, WidgetRef ref, {Pet? existing}) {
+    final nameController = TextEditingController(text: existing?.name ?? '');
+    String species = existing?.species ?? 'dog';
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -131,9 +135,22 @@ class HomeScreen extends ConsumerWidget {
                 onPressed: () async {
                   if (nameController.text.trim().isEmpty) return;
                   try {
-                    await ref.read(petsRepositoryProvider).create(
-                          Pet(id: '', ownerId: '', name: nameController.text.trim(), species: species),
-                        );
+                    if (existing == null) {
+                      await ref.read(petsRepositoryProvider).create(
+                            Pet(id: '', ownerId: '', name: nameController.text.trim(), species: species),
+                          );
+                    } else {
+                      await ref.read(petsRepositoryProvider).update(
+                            Pet(
+                              id: existing.id,
+                              ownerId: existing.ownerId,
+                              name: nameController.text.trim(),
+                              species: species,
+                              breed: existing.breed,
+                              birthDate: existing.birthDate,
+                            ),
+                          );
+                    }
                     ref.invalidate(petsProvider);
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
@@ -143,7 +160,7 @@ class HomeScreen extends ConsumerWidget {
                     }
                   }
                 },
-                child: const Text('Ajouter'),
+                child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
               ),
             ],
           ),

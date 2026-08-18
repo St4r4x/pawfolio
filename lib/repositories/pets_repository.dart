@@ -5,6 +5,7 @@ import '../models/pet.dart';
 abstract class PetsRepository {
   Future<List<Pet>> fetchAll();
   Future<Pet> create(Pet pet);
+  Future<Pet> update(Pet pet);
 }
 
 class SupabasePetsRepository implements PetsRepository {
@@ -22,6 +23,17 @@ class SupabasePetsRepository implements PetsRepository {
   Future<Pet> create(Pet pet) async {
     final ownerId = _client.auth.currentUser!.id;
     final row = await _client.from('pets').insert(pet.toInsertJson(ownerId: ownerId)).select().single();
+    return Pet.fromJson(row);
+  }
+
+  @override
+  Future<Pet> update(Pet pet) async {
+    final row = await _client
+        .from('pets')
+        .update(pet.toInsertJson(ownerId: pet.ownerId))
+        .eq('id', pet.id)
+        .select()
+        .single();
     return Pet.fromJson(row);
   }
 }
