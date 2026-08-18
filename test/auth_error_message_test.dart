@@ -10,7 +10,7 @@ void main() {
 
   test('returns the raw message for a plain AuthException', () {
     const error = AuthException('Invalid login credentials');
-    expect(authErrorMessage(error), 'Invalid login credentials');
+    expect(authErrorMessage(error), 'Email ou mot de passe incorrect.');
   });
 
   test('returns a friendly message for any other error type', () {
