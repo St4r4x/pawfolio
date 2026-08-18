@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../date_only.dart';
 import '../../../models/weight_entry.dart';
@@ -33,8 +34,11 @@ class WeightTab extends ConsumerWidget {
           ),
         ),
         data: (entries) => entries.isEmpty
-            ? const EmptyState(
-                illustration: Icon(Icons.monitor_weight, size: 64, color: AppColors.muted),
+            ? EmptyState(
+                illustration: SvgPicture.asset(
+                  'assets/illustrations/no_weight_entries.svg',
+                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                ),
                 title: 'Aucune pesée enregistrée',
                 subtitle: 'Ajoute la première pesée avec le bouton + ci-dessous.',
               )

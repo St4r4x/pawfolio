@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../date_only.dart';
 import '../../../models/vet_visit.dart';
@@ -32,8 +33,11 @@ class VetVisitsTab extends ConsumerWidget {
           ),
         ),
         data: (visits) => visits.isEmpty
-            ? const EmptyState(
-                illustration: Icon(Icons.local_hospital, size: 64, color: AppColors.muted),
+            ? EmptyState(
+                illustration: SvgPicture.asset(
+                  'assets/illustrations/no_vet_visits.svg',
+                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                ),
                 title: 'Aucun rendez-vous enregistré',
                 subtitle: 'Ajoute le premier rendez-vous avec le bouton + ci-dessous.',
               )

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../date_only.dart';
@@ -95,8 +96,11 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               data: (pets) => pets.isEmpty
-                  ? const EmptyState(
-                      illustration: Icon(Icons.pets, size: 64, color: AppColors.muted),
+                  ? EmptyState(
+                      illustration: SvgPicture.asset(
+                        'assets/illustrations/no_pets.svg',
+                        colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                      ),
                       title: 'Aucun animal pour le moment',
                       subtitle: 'Ajoute ton premier animal avec le bouton + ci-dessous.',
                     )

@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   richer empty state on the Home screen.
 - Illustrated empty states in Vaccins, Traitements, and RDV tabs with icons
   and helpful actionable subtitles.
+- Real unDraw SVG illustrations (via `flutter_svg`) in all six empty states
+  (pets, reminders, weight, vaccinations, treatments, vet visits), replacing
+  the placeholder icons.
 
 ## [1.0.0] - MVP baseline
 

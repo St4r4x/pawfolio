@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../date_only.dart';
 import '../../providers/reminders_provider.dart';
@@ -31,8 +32,11 @@ class RemindersScreen extends ConsumerWidget {
           ),
         ),
         data: (items) => items.isEmpty
-            ? const EmptyState(
-                illustration: Icon(Icons.notifications_none, size: 64, color: AppColors.muted),
+            ? EmptyState(
+                illustration: SvgPicture.asset(
+                  'assets/illustrations/no_reminders.svg',
+                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                ),
                 title: 'Aucun rappel à venir',
                 subtitle: 'Les vaccins, traitements et visites à venir apparaîtront ici.',
               )

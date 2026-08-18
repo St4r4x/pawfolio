@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../date_only.dart';
 import '../../../models/vaccination.dart';
@@ -32,8 +33,11 @@ class VaccinationsTab extends ConsumerWidget {
           ),
         ),
         data: (vaccinations) => vaccinations.isEmpty
-            ? const EmptyState(
-                illustration: Icon(Icons.vaccines, size: 64, color: AppColors.muted),
+            ? EmptyState(
+                illustration: SvgPicture.asset(
+                  'assets/illustrations/no_vaccinations.svg',
+                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                ),
                 title: 'Aucun vaccin enregistré',
                 subtitle: 'Ajoute le premier vaccin avec le bouton + ci-dessous.',
               )

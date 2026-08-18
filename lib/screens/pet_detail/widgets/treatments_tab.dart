@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../date_only.dart';
 import '../../../models/treatment.dart';
@@ -38,8 +39,11 @@ class TreatmentsTab extends ConsumerWidget {
           ),
         ),
         data: (treatments) => treatments.isEmpty
-            ? const EmptyState(
-                illustration: Icon(Icons.medication, size: 64, color: AppColors.muted),
+            ? EmptyState(
+                illustration: SvgPicture.asset(
+                  'assets/illustrations/no_treatments.svg',
+                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                ),
                 title: 'Aucun traitement enregistré',
                 subtitle: 'Ajoute le premier traitement avec le bouton + ci-dessous.',
               )
