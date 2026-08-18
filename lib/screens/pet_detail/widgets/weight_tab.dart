@@ -1,9 +1,12 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../date_only.dart';
 import '../../../models/weight_entry.dart';
 import '../../../providers/weight_entries_provider.dart' show weightEntriesRepositoryProvider, weightEntriesProvider;
+import '../../../theme.dart';
+import '../../../widgets/empty_state.dart';
 
 class WeightTab extends ConsumerWidget {
   const WeightTab({required this.petId, super.key});
@@ -30,20 +33,31 @@ class WeightTab extends ConsumerWidget {
           ),
         ),
         data: (entries) => entries.isEmpty
-            ? const Center(child: Text('Aucune pesée enregistrée'))
-            : ListView.builder(
-                itemCount: entries.length,
-                itemBuilder: (context, index) {
-                  final entry = entries[index];
-                  return ListTile(
-                    title: Text('${entry.weightKg} kg'),
-                    subtitle: Text(dateOnly(entry.recordedAt)),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _showAddWeightSheet(context, ref, existing: entry),
+            ? const EmptyState(
+                illustration: Icon(Icons.monitor_weight, size: 64, color: AppColors.muted),
+                title: 'Aucune pesée enregistrée',
+                subtitle: 'Ajoute la première pesée avec le bouton + ci-dessous.',
+              )
+            : Column(
+                children: [
+                  if (entries.length >= 2) _WeightChart(entries: entries),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: entries.length,
+                      itemBuilder: (context, index) {
+                        final entry = entries[index];
+                        return ListTile(
+                          title: Text('${entry.weightKg} kg'),
+                          subtitle: Text(dateOnly(entry.recordedAt)),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _showAddWeightSheet(context, ref, existing: entry),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -119,6 +133,66 @@ class WeightTab extends ConsumerWidget {
                   }
                 },
                 child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WeightChart extends StatelessWidget {
+  const _WeightChart({required this.entries});
+
+  final List<WeightEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final chronological = entries.reversed.toList();
+    // num.clamp returns num, not double — SideTitles.interval needs an explicit toDouble().
+    final labelInterval = (chronological.length / 4).ceil().clamp(1, chronological.length).toDouble();
+
+    return SizedBox(
+      height: 200,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: LineChart(
+          LineChartData(
+            gridData: const FlGridData(drawVerticalLine: false),
+            borderData: FlBorderData(show: false),
+            titlesData: FlTitlesData(
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  interval: labelInterval,
+                  getTitlesWidget: (value, meta) {
+                    final index = value.toInt();
+                    if (index < 0 || index >= chronological.length) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        dateOnly(chronological[index].recordedAt),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            lineBarsData: [
+              LineChartBarData(
+                spots: [
+                  for (var i = 0; i < chronological.length; i++)
+                    FlSpot(i.toDouble(), chronological[i].weightKg),
+                ],
+                isCurved: true,
+                color: AppColors.primary,
+                barWidth: 3,
+                dotData: const FlDotData(),
               ),
             ],
           ),
