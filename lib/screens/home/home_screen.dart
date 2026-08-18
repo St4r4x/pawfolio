@@ -214,7 +214,9 @@ class HomeScreen extends ConsumerWidget {
 
   void _showAddPetSheet(BuildContext context, WidgetRef ref, {Pet? existing}) {
     final nameController = TextEditingController(text: existing?.name ?? '');
+    final breedController = TextEditingController(text: existing?.breed ?? '');
     String species = existing?.species ?? 'dog';
+    DateTime? birthDate = existing?.birthDate;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -237,9 +239,32 @@ class HomeScreen extends ConsumerWidget {
                 value: species,
                 onChanged: (value) => setState(() => species = value),
               ),
+              TextField(
+                controller: breedController,
+                decoration: const InputDecoration(labelText: 'Race'),
+              ),
+              ListTile(
+                title: Text(
+                  birthDate == null
+                      ? 'Date de naissance (facultatif)'
+                      : 'Né(e) le ${dateOnly(birthDate!)}',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: sheetContext,
+                    initialDate: birthDate ?? DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) setState(() => birthDate = picked);
+                },
+              ),
               FilledButton(
                 onPressed: () async {
                   if (nameController.text.trim().isEmpty) return;
+                  final trimmedBreed = breedController.text.trim();
+                  final breed = trimmedBreed.isEmpty ? null : trimmedBreed;
                   try {
                     if (existing == null) {
                       await ref
@@ -250,6 +275,8 @@ class HomeScreen extends ConsumerWidget {
                               ownerId: '',
                               name: nameController.text.trim(),
                               species: species,
+                              breed: breed,
+                              birthDate: birthDate,
                             ),
                           );
                     } else {
@@ -261,8 +288,8 @@ class HomeScreen extends ConsumerWidget {
                               ownerId: existing.ownerId,
                               name: nameController.text.trim(),
                               species: species,
-                              breed: existing.breed,
-                              birthDate: existing.birthDate,
+                              breed: breed,
+                              birthDate: birthDate,
                             ),
                           );
                     }

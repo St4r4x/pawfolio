@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Breed and birth date fields in the add/edit pet sheet (both already
+  existed in the data model and already displayed on the pet detail
+  screen — only the input fields were missing).
 - Centered card layout and a slogan on the login and signup screens.
 - Forgot-password screen, wired to Supabase Auth's password reset email.
 - Onboarding flow after signup: an optional first-name step, then a
