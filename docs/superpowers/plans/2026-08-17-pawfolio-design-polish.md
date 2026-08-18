@@ -125,7 +125,9 @@ git commit -m "feat: add app theme with brand colors and typography"
 - Create: `lib/auth_errors.dart`, `test/auth_errors_test.dart`
 
 **Interfaces:**
-- Produces: `mapAuthError(String message) -> String`, consumed by Task 3's login/signup screens in place of the raw `AuthException.message`.
+- Produces: `mapAuthError(String message) -> String`, consumed by `lib/auth_error_message.dart`'s `authErrorMessage` function (see Step 6) rather than directly by the screens — Task 3's screens call `authErrorMessage(e)` unchanged from what a prior fix-plan already wired in.
+
+**Context:** `lib/auth_error_message.dart` and its `authErrorMessage(Object error) -> String` function already exist in the codebase (added by the MVP final-review-fixes plan, Task 19) — both login and signup screens already have a single `catch (e) { setState(() => _error = authErrorMessage(e)); }` clause. That function currently returns a raw, untranslated `error.message` for a plain `AuthException`. This task's job is to make that branch route through the new `mapAuthError` instead, so known errors get a French message while the `AuthRetryableFetchException`/generic-network-error handling (a real bug found via live device testing, see `authErrorMessage`'s own code) is left completely untouched.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -185,6 +187,67 @@ git add test/auth_errors_test.dart lib/auth_errors.dart
 git commit -m "feat: translate Supabase auth errors to French"
 ```
 
+- [ ] **Step 6: Route `authErrorMessage`'s AuthException branch through `mapAuthError`**
+
+Open `lib/auth_error_message.dart` (already exists). It currently reads:
+
+```dart
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+String authErrorMessage(Object error) {
+  if (error is AuthRetryableFetchException) {
+    return 'Impossible de contacter le serveur. Vérifie ta connexion.';
+  }
+  if (error is AuthException) {
+    return error.message;
+  }
+  return 'Impossible de contacter le serveur. Vérifie ta connexion.';
+}
+```
+
+Change only the `AuthException` branch (leave the `AuthRetryableFetchException` check first and the fallback exactly as they are — that ordering is a load-bearing fix from live device testing, not incidental):
+
+```dart
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'auth_errors.dart';
+
+String authErrorMessage(Object error) {
+  if (error is AuthRetryableFetchException) {
+    return 'Impossible de contacter le serveur. Vérifie ta connexion.';
+  }
+  if (error is AuthException) {
+    return mapAuthError(error.message);
+  }
+  return 'Impossible de contacter le serveur. Vérifie ta connexion.';
+}
+```
+
+- [ ] **Step 7: Run the existing test file and the full suite**
+
+```bash
+flutter test test/auth_error_message_test.dart
+flutter test > /tmp/task2_step7_test_output.txt 2>&1
+echo "exit code: $?"
+cat /tmp/task2_step7_test_output.txt
+```
+
+Expected: `test/auth_error_message_test.dart`'s "returns the raw message for a plain AuthException" case now returns whatever `mapAuthError('Invalid login credentials')` produces (`'Email ou mot de passe incorrect.'`) instead of the raw string — update that one assertion in `test/auth_error_message_test.dart` to match, since the behavior it's checking genuinely changed:
+
+```dart
+  test('returns the raw message for a plain AuthException', () {
+    const error = AuthException('Invalid login credentials');
+    expect(authErrorMessage(error), 'Email ou mot de passe incorrect.');
+  });
+```
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add lib/auth_error_message.dart test/auth_error_message_test.dart
+git commit -m "feat: translate known auth errors to French in authErrorMessage"
+```
+
 ---
 
 ## Task 3: Signup & login screen polish
@@ -194,7 +257,7 @@ git commit -m "feat: translate Supabase auth errors to French"
 - Modify: `lib/screens/auth/login_screen.dart` (full rewrite), `lib/screens/auth/signup_screen.dart` (full rewrite)
 
 **Interfaces:**
-- Consumes: `AppColors` (Task 1, `lib/theme.dart`), `mapAuthError` (Task 2, `lib/auth_errors.dart`).
+- Consumes: `AppColors` (Task 1, `lib/theme.dart`), `authErrorMessage` (`lib/auth_error_message.dart`, pre-existing from the MVP final-review-fixes plan, updated by Task 2's Step 6 to route through `mapAuthError`).
 - Produces: no new interfaces — `LoginScreen`/`SignupScreen` keep their existing no-argument constructors, used unchanged by `lib/app_router.dart`.
 
 - [ ] **Step 1: Write the failing widget tests**
@@ -286,7 +349,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../auth_errors.dart';
+import '../../auth_error_message.dart';
 import '../../theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -356,8 +419,12 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-    } on AuthException catch (e) {
-      setState(() => _error = mapAuthError(e.message));
+    } catch (e) {
+      // authErrorMessage (lib/auth_error_message.dart) already handles the
+      // AuthRetryableFetchException-before-AuthException ordering fix from
+      // live device testing (MVP final-review-fixes plan, commit d1e7306) —
+      // don't reintroduce separate catch clauses here, keep this one call.
+      setState(() => _error = authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -437,7 +504,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../auth_errors.dart';
+import '../../auth_error_message.dart';
 import '../../theme.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -508,8 +575,12 @@ class _SignupScreenState extends State<SignupScreen> {
         password: _passwordController.text,
       );
       if (mounted) context.go('/');
-    } on AuthException catch (e) {
-      setState(() => _error = mapAuthError(e.message));
+    } catch (e) {
+      // authErrorMessage (lib/auth_error_message.dart) already handles the
+      // AuthRetryableFetchException-before-AuthException ordering fix from
+      // live device testing (MVP final-review-fixes plan, commit d1e7306) —
+      // don't reintroduce separate catch clauses here, keep this one call.
+      setState(() => _error = authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

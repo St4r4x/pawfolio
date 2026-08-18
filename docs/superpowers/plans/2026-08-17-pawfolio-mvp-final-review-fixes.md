@@ -1688,3 +1688,123 @@ git commit -m "fix: address issues found during final-review-fixes verification"
 If Step 6 required no changes, skip this commit.
 
 ---
+
+## Task 19: Regression test for auth error classification
+
+**Files:**
+- Create: `lib/auth_error_message.dart`, `test/auth_error_message_test.dart`
+- Modify: `lib/screens/auth/login_screen.dart`, `lib/screens/auth/signup_screen.dart`
+
+**Interfaces:**
+- Produces: `authErrorMessage(Object error) -> String`.
+
+**Context:** Task 18's live device verification found that `AuthRetryableFetchException` (thrown by gotrue for raw network failures) is a *subtype* of `AuthException`, so it must be caught before the generic `AuthException` clause or its raw technical message leaks to the UI. That fix (commit `d1e7306`) is already live in both screens as three separate `catch` clauses in a specific required order — but nothing tests that ordering, so a future edit (e.g. reordering catches during a refactor) could silently reintroduce the bug with no test failure to catch it. This task collapses the three catch clauses into one, delegating the classification to a small pure function that's directly unit-testable without needing Supabase initialized, a real network call, or a widget at all — `AuthRetryableFetchException` has a public constructor (`AuthRetryableFetchException({String message, String? statusCode})`), so tests can construct one directly.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/auth_error_message_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pawfolio/auth_error_message.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+void main() {
+  test('returns a friendly message for AuthRetryableFetchException', () {
+    final error = AuthRetryableFetchException(message: 'ClientException with SocketException');
+    expect(authErrorMessage(error), 'Impossible de contacter le serveur. Vérifie ta connexion.');
+  });
+
+  test('returns the raw message for a plain AuthException', () {
+    const error = AuthException('Invalid login credentials');
+    expect(authErrorMessage(error), 'Invalid login credentials');
+  });
+
+  test('returns a friendly message for any other error type', () {
+    expect(authErrorMessage(Exception('boom')), 'Impossible de contacter le serveur. Vérifie ta connexion.');
+  });
+}
+```
+
+- [ ] **Step 2: Run it to confirm it fails**
+
+```bash
+flutter test test/auth_error_message_test.dart
+```
+
+Expected: FAIL — `lib/auth_error_message.dart` doesn't exist.
+
+- [ ] **Step 3: Create `lib/auth_error_message.dart`**
+
+```dart
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+String authErrorMessage(Object error) {
+  if (error is AuthRetryableFetchException) {
+    return 'Impossible de contacter le serveur. Vérifie ta connexion.';
+  }
+  if (error is AuthException) {
+    return error.message;
+  }
+  return 'Impossible de contacter le serveur. Vérifie ta connexion.';
+}
+```
+
+- [ ] **Step 4: Run the test again**
+
+```bash
+flutter test test/auth_error_message_test.dart
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Wire it into `lib/screens/auth/login_screen.dart`**
+
+Add the import:
+
+```dart
+import '../../auth_error_message.dart';
+```
+
+Replace the current three-clause catch block:
+
+```dart
+    } on AuthRetryableFetchException {
+      // gotrue wraps raw network failures (e.g. no connectivity) as a
+      // *subtype* of AuthException with a raw technical message (see
+      // gotrue's GotrueFetch._handleError) - it must be caught before the
+      // generic `on AuthException` clause below or that clause swallows it
+      // and shows the raw message instead of this friendly one.
+      setState(() => _error = 'Impossible de contacter le serveur. Vérifie ta connexion.');
+    } on AuthException catch (e) {
+      setState(() => _error = e.message);
+    } catch (e) {
+      setState(() => _error = 'Impossible de contacter le serveur. Vérifie ta connexion.');
+    } finally {
+```
+
+with:
+
+```dart
+    } catch (e) {
+      setState(() => _error = authErrorMessage(e));
+    } finally {
+```
+
+- [ ] **Step 6: Apply the identical change to `lib/screens/auth/signup_screen.dart`**
+
+Same import addition, same catch-block replacement (the file has the identical three-clause structure).
+
+- [ ] **Step 7: Run the full suite and commit**
+
+```bash
+flutter test > /tmp/task19_test_output.txt 2>&1
+echo "exit code: $?"
+cat /tmp/task19_test_output.txt
+git add -A
+git commit -m "refactor: extract testable auth error classification"
+```
+
+Expected: full suite passes, including the existing `test/screens/auth_error_handling_test.dart` (its assertions still hold — `authErrorMessage` produces the same output the inline catch logic did).
+
+---
