@@ -46,6 +46,12 @@ class FakeVaccinationsRepository implements VaccinationsRepository {
 
   @override
   Future<void> create(Vaccination vaccination) async => vaccinations.add(vaccination);
+
+  @override
+  Future<void> update(Vaccination vaccination) async {
+    final index = vaccinations.indexWhere((v) => v.id == vaccination.id);
+    if (index != -1) vaccinations[index] = vaccination;
+  }
 }
 
 void main() {

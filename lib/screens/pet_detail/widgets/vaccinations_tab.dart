@@ -42,6 +42,10 @@ class VaccinationsTab extends ConsumerWidget {
                       'Fait le ${dateOnly(vaccination.dateAdministered)}'
                       '${nextDue != null ? ' · rappel le ${dateOnly(nextDue)}' : ''}',
                     ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _showAddVaccinationSheet(context, ref, existing: vaccination),
+                    ),
                   );
                 },
               ),
@@ -53,10 +57,10 @@ class VaccinationsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddVaccinationSheet(BuildContext context, WidgetRef ref) {
-    final nameController = TextEditingController();
-    DateTime dateAdministered = DateTime.now();
-    DateTime? nextDueDate;
+  void _showAddVaccinationSheet(BuildContext context, WidgetRef ref, {Vaccination? existing}) {
+    final nameController = TextEditingController(text: existing?.name ?? '');
+    DateTime dateAdministered = existing?.dateAdministered ?? DateTime.now();
+    DateTime? nextDueDate = existing?.nextDueDate;
 
     showModalBottomSheet(
       context: context,
@@ -106,13 +110,24 @@ class VaccinationsTab extends ConsumerWidget {
                 onPressed: () async {
                   if (nameController.text.trim().isEmpty) return;
                   try {
-                    await ref.read(vaccinationsRepositoryProvider).create(Vaccination(
-                          id: '',
-                          petId: petId,
-                          name: nameController.text.trim(),
-                          dateAdministered: dateAdministered,
-                          nextDueDate: nextDueDate,
-                        ));
+                    if (existing == null) {
+                      await ref.read(vaccinationsRepositoryProvider).create(Vaccination(
+                            id: '',
+                            petId: petId,
+                            name: nameController.text.trim(),
+                            dateAdministered: dateAdministered,
+                            nextDueDate: nextDueDate,
+                          ));
+                    } else {
+                      await ref.read(vaccinationsRepositoryProvider).update(Vaccination(
+                            id: existing.id,
+                            petId: petId,
+                            name: nameController.text.trim(),
+                            dateAdministered: dateAdministered,
+                            nextDueDate: nextDueDate,
+                            notes: existing.notes,
+                          ));
+                    }
                     ref.invalidate(vaccinationsProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
@@ -122,7 +137,7 @@ class VaccinationsTab extends ConsumerWidget {
                     }
                   }
                 },
-                child: const Text('Ajouter'),
+                child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
               ),
             ],
           ),

@@ -5,6 +5,7 @@ import '../models/vaccination.dart';
 abstract class VaccinationsRepository {
   Future<List<Vaccination>> fetchForPet(String petId);
   Future<void> create(Vaccination vaccination);
+  Future<void> update(Vaccination vaccination);
 }
 
 class SupabaseVaccinationsRepository implements VaccinationsRepository {
@@ -25,5 +26,10 @@ class SupabaseVaccinationsRepository implements VaccinationsRepository {
   @override
   Future<void> create(Vaccination vaccination) async {
     await _client.from('vaccinations').insert(vaccination.toInsertJson());
+  }
+
+  @override
+  Future<void> update(Vaccination vaccination) async {
+    await _client.from('vaccinations').update(vaccination.toInsertJson()).eq('id', vaccination.id);
   }
 }

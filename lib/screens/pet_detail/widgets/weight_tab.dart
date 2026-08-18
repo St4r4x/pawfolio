@@ -38,6 +38,10 @@ class WeightTab extends ConsumerWidget {
                   return ListTile(
                     title: Text('${entry.weightKg} kg'),
                     subtitle: Text(dateOnly(entry.recordedAt)),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _showAddWeightSheet(context, ref, existing: entry),
+                    ),
                   );
                 },
               ),
@@ -49,9 +53,9 @@ class WeightTab extends ConsumerWidget {
     );
   }
 
-  void _showAddWeightSheet(BuildContext context, WidgetRef ref) {
-    final weightController = TextEditingController();
-    DateTime recordedAt = DateTime.now();
+  void _showAddWeightSheet(BuildContext context, WidgetRef ref, {WeightEntry? existing}) {
+    final weightController = TextEditingController(text: existing?.weightKg.toString() ?? '');
+    DateTime recordedAt = existing?.recordedAt ?? DateTime.now();
 
     showModalBottomSheet(
       context: context,
@@ -90,12 +94,21 @@ class WeightTab extends ConsumerWidget {
                   final weight = double.tryParse(weightController.text.replaceAll(',', '.'));
                   if (weight == null) return;
                   try {
-                    await ref.read(weightEntriesRepositoryProvider).create(WeightEntry(
-                          id: '',
-                          petId: petId,
-                          weightKg: weight,
-                          recordedAt: recordedAt,
-                        ));
+                    if (existing == null) {
+                      await ref.read(weightEntriesRepositoryProvider).create(WeightEntry(
+                            id: '',
+                            petId: petId,
+                            weightKg: weight,
+                            recordedAt: recordedAt,
+                          ));
+                    } else {
+                      await ref.read(weightEntriesRepositoryProvider).update(WeightEntry(
+                            id: existing.id,
+                            petId: petId,
+                            weightKg: weight,
+                            recordedAt: recordedAt,
+                          ));
+                    }
                     ref.invalidate(weightEntriesProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
@@ -105,7 +118,7 @@ class WeightTab extends ConsumerWidget {
                     }
                   }
                 },
-                child: const Text('Ajouter'),
+                child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
               ),
             ],
           ),

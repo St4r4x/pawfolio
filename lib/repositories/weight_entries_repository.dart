@@ -19,4 +19,8 @@ class WeightEntriesRepository {
   Future<void> create(WeightEntry entry) async {
     await _client.from('weight_entries').insert(entry.toInsertJson());
   }
+
+  Future<void> update(WeightEntry entry) async {
+    await _client.from('weight_entries').update(entry.toInsertJson()).eq('id', entry.id);
+  }
 }
