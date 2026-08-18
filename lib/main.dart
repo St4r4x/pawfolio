@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_router.dart';
 import 'notifications/reminder_scheduler.dart';
 import 'supabase_config.dart';
+import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,7 @@ class PawfolioApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       title: 'Pawfolio',
+      theme: pawfolioTheme,
       routerConfig: router,
     );
   }
