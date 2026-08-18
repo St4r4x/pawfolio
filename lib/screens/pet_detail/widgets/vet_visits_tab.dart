@@ -42,6 +42,10 @@ class VetVisitsTab extends ConsumerWidget {
                       'Le ${dateOnly(visit.visitDate)}'
                       '${nextVisit != null ? ' · prochain RDV le ${dateOnly(nextVisit)}' : ''}',
                     ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _showAddVisitSheet(context, ref, existing: visit),
+                    ),
                   );
                 },
               ),
@@ -53,10 +57,10 @@ class VetVisitsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddVisitSheet(BuildContext context, WidgetRef ref) {
-    final reasonController = TextEditingController();
-    DateTime visitDate = DateTime.now();
-    DateTime? nextVisitDate;
+  void _showAddVisitSheet(BuildContext context, WidgetRef ref, {VetVisit? existing}) {
+    final reasonController = TextEditingController(text: existing?.reason ?? '');
+    DateTime visitDate = existing?.visitDate ?? DateTime.now();
+    DateTime? nextVisitDate = existing?.nextVisitDate;
 
     showModalBottomSheet(
       context: context,
@@ -108,13 +112,24 @@ class VetVisitsTab extends ConsumerWidget {
                 onPressed: () async {
                   if (reasonController.text.trim().isEmpty) return;
                   try {
-                    await ref.read(vetVisitsRepositoryProvider).create(VetVisit(
-                          id: '',
-                          petId: petId,
-                          visitDate: visitDate,
-                          reason: reasonController.text.trim(),
-                          nextVisitDate: nextVisitDate,
-                        ));
+                    if (existing == null) {
+                      await ref.read(vetVisitsRepositoryProvider).create(VetVisit(
+                            id: '',
+                            petId: petId,
+                            visitDate: visitDate,
+                            reason: reasonController.text.trim(),
+                            nextVisitDate: nextVisitDate,
+                          ));
+                    } else {
+                      await ref.read(vetVisitsRepositoryProvider).update(VetVisit(
+                            id: existing.id,
+                            petId: petId,
+                            visitDate: visitDate,
+                            reason: reasonController.text.trim(),
+                            nextVisitDate: nextVisitDate,
+                            notes: existing.notes,
+                          ));
+                    }
                     ref.invalidate(vetVisitsProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
@@ -124,7 +139,7 @@ class VetVisitsTab extends ConsumerWidget {
                     }
                   }
                 },
-                child: const Text('Ajouter'),
+                child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
               ),
             ],
           ),

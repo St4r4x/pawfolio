@@ -48,6 +48,10 @@ class TreatmentsTab extends ConsumerWidget {
                       '${_typeLabels[treatment.type]} · fait le ${dateOnly(treatment.dateGiven)}'
                       '${nextDue != null ? ' · rappel le ${dateOnly(nextDue)}' : ''}',
                     ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _showAddTreatmentSheet(context, ref, existing: treatment),
+                    ),
                   );
                 },
               ),
@@ -59,11 +63,11 @@ class TreatmentsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddTreatmentSheet(BuildContext context, WidgetRef ref) {
-    final nameController = TextEditingController();
-    String type = 'dewormer';
-    DateTime dateGiven = DateTime.now();
-    DateTime? nextDueDate;
+  void _showAddTreatmentSheet(BuildContext context, WidgetRef ref, {Treatment? existing}) {
+    final nameController = TextEditingController(text: existing?.name ?? '');
+    String type = existing?.type ?? 'dewormer';
+    DateTime dateGiven = existing?.dateGiven ?? DateTime.now();
+    DateTime? nextDueDate = existing?.nextDueDate;
 
     showModalBottomSheet(
       context: context,
@@ -120,14 +124,26 @@ class TreatmentsTab extends ConsumerWidget {
                 onPressed: () async {
                   if (nameController.text.trim().isEmpty) return;
                   try {
-                    await ref.read(treatmentsRepositoryProvider).create(Treatment(
-                          id: '',
-                          petId: petId,
-                          type: type,
-                          name: nameController.text.trim(),
-                          dateGiven: dateGiven,
-                          nextDueDate: nextDueDate,
-                        ));
+                    if (existing == null) {
+                      await ref.read(treatmentsRepositoryProvider).create(Treatment(
+                            id: '',
+                            petId: petId,
+                            type: type,
+                            name: nameController.text.trim(),
+                            dateGiven: dateGiven,
+                            nextDueDate: nextDueDate,
+                          ));
+                    } else {
+                      await ref.read(treatmentsRepositoryProvider).update(Treatment(
+                            id: existing.id,
+                            petId: petId,
+                            type: type,
+                            name: nameController.text.trim(),
+                            dateGiven: dateGiven,
+                            nextDueDate: nextDueDate,
+                            notes: existing.notes,
+                          ));
+                    }
                     ref.invalidate(treatmentsProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
@@ -137,7 +153,7 @@ class TreatmentsTab extends ConsumerWidget {
                     }
                   }
                 },
-                child: const Text('Ajouter'),
+                child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
               ),
             ],
           ),

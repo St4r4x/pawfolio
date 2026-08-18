@@ -19,4 +19,8 @@ class TreatmentsRepository {
   Future<void> create(Treatment treatment) async {
     await _client.from('treatments').insert(treatment.toInsertJson());
   }
+
+  Future<void> update(Treatment treatment) async {
+    await _client.from('treatments').update(treatment.toInsertJson()).eq('id', treatment.id);
+  }
 }

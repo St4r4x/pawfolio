@@ -19,4 +19,8 @@ class VetVisitsRepository {
   Future<void> create(VetVisit visit) async {
     await _client.from('vet_visits').insert(visit.toInsertJson());
   }
+
+  Future<void> update(VetVisit visit) async {
+    await _client.from('vet_visits').update(visit.toInsertJson()).eq('id', visit.id);
+  }
 }
