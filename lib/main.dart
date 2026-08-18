@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_router.dart';
 import 'notifications/reminder_scheduler.dart';
+import 'providers/theme_mode_provider.dart';
 import 'supabase_config.dart';
 import 'theme.dart';
 
@@ -24,9 +25,12 @@ class PawfolioApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: 'Pawfolio',
       theme: pawfolioTheme,
+      darkTheme: pawfolioDarkTheme,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }
