@@ -1,17 +1,38 @@
-# pawfolio
+# Pawfolio
 
-A new Flutter project.
+A Flutter app for tracking your pets' health: profiles, vaccinations, weight,
+treatments, and vet visits, with upcoming-reminder notifications.
 
-## Getting Started
+## Stack
 
-This project is a starting point for a Flutter application.
+- Flutter + Riverpod + go_router
+- Supabase (auth, Postgres) via `supabase_flutter`
+- Local notifications (`flutter_local_notifications`) for upcoming reminders
 
-A few resources to get you started if this is your first Flutter project:
+## Getting started
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Start the local Supabase stack, then run the app against it:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+supabase start
+./scripts/run_local.sh            # defaults to emulator-5554
+```
+
+`scripts/run_local.sh` reads the local stack's anon key from `supabase status`
+and passes it to `flutter run` via `--dart-define`.
+
+## Testing
+
+```bash
+flutter test
+```
+
+## Project layout
+
+- `lib/screens/` — auth (login/signup), home, and pet detail screens
+- `lib/repositories/` + `lib/providers/` — Supabase-backed data access via Riverpod
+- `lib/models/` — pet, vaccination, weight entry, treatment, vet visit
+- `lib/reminders.dart` — upcoming-reminder sorting and urgency classification
+- `lib/notifications/` — local notification scheduling for reminders
+- `lib/theme.dart` — brand colors and typography
+- `supabase/migrations/` — database schema
