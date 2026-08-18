@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pawfolio/models/treatment.dart';
 import 'package:pawfolio/providers/treatments_provider.dart';
 import 'package:pawfolio/screens/pet_detail/widgets/treatments_tab.dart';
+import 'package:pawfolio/widgets/empty_state.dart';
 
 void main() {
   testWidgets('shows treatments for the given pet', (tester) async {
@@ -32,5 +33,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Aucun traitement enregistré'), findsOneWidget);
+    expect(find.byType(EmptyState), findsOneWidget);
   });
 }

@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   login and signup screens, plus first branding (paw icon + wordmark).
 - Color-coded urgency (today / soon / later) for upcoming reminders, and a
   richer empty state on the Home screen.
+- Illustrated empty states in Vaccins, Traitements, and RDV tabs with icons
+  and helpful actionable subtitles.
 
 ## [1.0.0] - MVP baseline
 

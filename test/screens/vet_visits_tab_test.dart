@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pawfolio/models/vet_visit.dart';
 import 'package:pawfolio/providers/vet_visits_provider.dart';
 import 'package:pawfolio/screens/pet_detail/widgets/vet_visits_tab.dart';
+import 'package:pawfolio/widgets/empty_state.dart';
 
 void main() {
   testWidgets('shows vet visits for the given pet', (tester) async {
@@ -32,5 +33,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Aucun rendez-vous enregistré'), findsOneWidget);
+    expect(find.byType(EmptyState), findsOneWidget);
   });
 }

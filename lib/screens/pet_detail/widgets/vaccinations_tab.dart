@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../date_only.dart';
 import '../../../models/vaccination.dart';
 import '../../../providers/vaccinations_provider.dart';
+import '../../../theme.dart';
+import '../../../widgets/empty_state.dart';
 
 class VaccinationsTab extends ConsumerWidget {
   const VaccinationsTab({required this.petId, super.key});
@@ -30,7 +32,11 @@ class VaccinationsTab extends ConsumerWidget {
           ),
         ),
         data: (vaccinations) => vaccinations.isEmpty
-            ? const Center(child: Text('Aucun vaccin enregistré'))
+            ? const EmptyState(
+                illustration: Icon(Icons.vaccines, size: 64, color: AppColors.muted),
+                title: 'Aucun vaccin enregistré',
+                subtitle: 'Ajoute le premier vaccin avec le bouton + ci-dessous.',
+              )
             : ListView.builder(
                 itemCount: vaccinations.length,
                 itemBuilder: (context, index) {

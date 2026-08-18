@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../date_only.dart';
 import '../../../models/treatment.dart';
 import '../../../providers/treatments_provider.dart';
+import '../../../theme.dart';
+import '../../../widgets/empty_state.dart';
 
 class TreatmentsTab extends ConsumerWidget {
   const TreatmentsTab({required this.petId, super.key});
@@ -36,7 +38,11 @@ class TreatmentsTab extends ConsumerWidget {
           ),
         ),
         data: (treatments) => treatments.isEmpty
-            ? const Center(child: Text('Aucun traitement enregistré'))
+            ? const EmptyState(
+                illustration: Icon(Icons.medication, size: 64, color: AppColors.muted),
+                title: 'Aucun traitement enregistré',
+                subtitle: 'Ajoute le premier traitement avec le bouton + ci-dessous.',
+              )
             : ListView.builder(
                 itemCount: treatments.length,
                 itemBuilder: (context, index) {

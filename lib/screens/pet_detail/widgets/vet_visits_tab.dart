@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../date_only.dart';
 import '../../../models/vet_visit.dart';
 import '../../../providers/vet_visits_provider.dart';
+import '../../../theme.dart';
+import '../../../widgets/empty_state.dart';
 
 class VetVisitsTab extends ConsumerWidget {
   const VetVisitsTab({required this.petId, super.key});
@@ -30,7 +32,11 @@ class VetVisitsTab extends ConsumerWidget {
           ),
         ),
         data: (visits) => visits.isEmpty
-            ? const Center(child: Text('Aucun rendez-vous enregistré'))
+            ? const EmptyState(
+                illustration: Icon(Icons.local_hospital, size: 64, color: AppColors.muted),
+                title: 'Aucun rendez-vous enregistré',
+                subtitle: 'Ajoute le premier rendez-vous avec le bouton + ci-dessous.',
+              )
             : ListView.builder(
                 itemCount: visits.length,
                 itemBuilder: (context, index) {
