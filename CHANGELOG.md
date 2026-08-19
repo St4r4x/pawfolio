@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Pets, vaccinations, treatments, vet visits, and weight entries no longer
+  show stale data from a previously signed-in account after switching
+  accounts within the same running session.
+
 ### Added
 - Breed and birth date fields in the add/edit pet sheet (both already
   existed in the data model and already displayed on the pet detail
