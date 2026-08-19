@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth_error_message.dart';
 import '../../email_validation.dart';
+import '../../password_validation.dart';
 import '../../widgets/auth_brand_header.dart';
 import '../../widgets/auth_card.dart';
 
@@ -54,7 +55,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   bool _validatePassword() {
-    final valid = _passwordController.text.length >= 6;
+    final valid = isValidPassword(_passwordController.text);
     setState(
       () => _passwordError = valid
           ? null

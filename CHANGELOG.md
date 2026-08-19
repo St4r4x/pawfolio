@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   accounts within the same running session.
 
 ### Added
+- Set-new-password screen, completing the forgot-password flow: clicking
+  the reset-password email link now routes to a screen to actually type a
+  new password, instead of silently logging in on Home with the old one
+  still active.
 - Breed and birth date fields in the add/edit pet sheet (both already
   existed in the data model and already displayed on the pet detail
   screen — only the input fields were missing).

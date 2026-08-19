@@ -9,8 +9,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_shell.dart';
 import 'auth_redirect.dart';
 import 'motion.dart';
+import 'providers/password_recovery_provider.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -19,14 +21,27 @@ import 'screens/profile/profile_screen.dart';
 import 'screens/reminders/reminders_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final refreshStream = GoRouterRefreshStream(
+    Supabase.instance.client.auth.onAuthStateChange,
+  );
+  // refreshStream's own subscription (above) is registered on the raw auth
+  // stream before authEventProvider's, so on a real passwordRecovery event
+  // it can fire redirect() before isPasswordRecoveryProvider flips to true,
+  // missing that pass. This re-triggers redirect once the flag actually
+  // updates. (Also fires on clear(), though that path already re-triggers
+  // via ResetPasswordScreen's explicit context.go('/').)
+  ref.listen(
+    isPasswordRecoveryProvider,
+    (previous, next) => refreshStream.refresh(),
+  );
+
   return GoRouter(
     initialLocation: '/',
-    refreshListenable: GoRouterRefreshStream(
-      Supabase.instance.client.auth.onAuthStateChange,
-    ),
+    refreshListenable: refreshStream,
     redirect: (context, state) => authRedirect(
       loggedIn: Supabase.instance.client.auth.currentSession != null,
       location: state.matchedLocation,
+      isPasswordRecovery: ref.read(isPasswordRecoveryProvider),
     ),
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
@@ -37,6 +52,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(
         path: '/onboarding',
@@ -105,6 +124,8 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 
   late final StreamSubscription<dynamic> _subscription;
+
+  void refresh() => notifyListeners();
 
   @override
   void dispose() {
