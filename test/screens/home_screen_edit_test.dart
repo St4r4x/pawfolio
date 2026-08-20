@@ -171,7 +171,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.camera_alt).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Supprimer la photo'), findsNothing);
+    expect(find.text('Icône par défaut'), findsNothing);
   });
 
   testWidgets('deleting the photo clears photoUrl on save', (tester) async {
@@ -201,8 +201,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.camera_alt).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Supprimer la photo'), findsOneWidget);
-    await tester.tap(find.text('Supprimer la photo'));
+    expect(find.text('Icône par défaut'), findsOneWidget);
+    await tester.tap(find.text('Icône par défaut'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Enregistrer'));

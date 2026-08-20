@@ -253,14 +253,8 @@ class HomeScreen extends ConsumerWidget {
             ),
             if (hasPhoto)
               ListTile(
-                leading: const Icon(
-                  Icons.delete_outline,
-                  color: AppColors.error,
-                ),
-                title: const Text(
-                  'Supprimer la photo',
-                  style: TextStyle(color: AppColors.error),
-                ),
+                leading: const Icon(Icons.pets, color: AppColors.muted),
+                title: const Text('Icône par défaut'),
                 onTap: () => Navigator.of(sheetContext).pop('delete'),
               ),
           ],
@@ -292,86 +286,45 @@ class HomeScreen extends ConsumerWidget {
           builder: (sheetContext, setState) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  PetAvatar(
-                    species: species,
-                    radius: avatarRadius,
-                    photoUrl: photoUrl,
-                  ),
-                  if (uploadingPhoto)
-                    Container(
-                      width: avatarRadius * 2,
-                      height: avatarRadius * 2,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black38,
-                      ),
-                      child: const CircularProgressIndicator(
-                        color: Colors.white,
-                      ),
-                    ),
-                  Positioned(
-                    bottom: -6,
-                    right: -6,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      child: IconButton.filled(
-                        icon: const Icon(Icons.camera_alt, size: 16),
-                        style: IconButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(28, 28),
-                          padding: EdgeInsets.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: uploadingPhoto
-                            ? null
-                            : () async {
-                                final choice = await _showPhotoSourceSheet(
-                                  sheetContext,
-                                  hasPhoto: photoUrl != null,
-                                );
-                                if (choice == null) return;
-                                if (choice == 'delete') {
-                                  setState(() => photoUrl = null);
-                                  return;
-                                }
-                                final source = choice == 'camera'
-                                    ? ImageSource.camera
-                                    : ImageSource.gallery;
-                                setState(() => uploadingPhoto = true);
-                                try {
-                                  final url = await ref.read(
-                                    petPhotoUploaderProvider,
-                                  )(source);
-                                  if (url != null) {
-                                    setState(() => photoUrl = url);
-                                  }
-                                } catch (error) {
-                                  if (sheetContext.mounted) {
-                                    ScaffoldMessenger.of(
-                                      sheetContext,
-                                    ).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Erreur photo: $error'),
-                                      ),
-                                    );
-                                  }
-                                } finally {
-                                  setState(() => uploadingPhoto = false);
-                                }
-                              },
-                      ),
-                    ),
-                  ),
-                ],
+              PetAvatar(species: species, radius: avatarRadius, photoUrl: photoUrl),
+              TextButton.icon(
+                onPressed: uploadingPhoto
+                    ? null
+                    : () async {
+                        final choice = await _showPhotoSourceSheet(
+                          sheetContext,
+                          hasPhoto: photoUrl != null,
+                        );
+                        if (choice == null) return;
+                        if (choice == 'delete') {
+                          setState(() => photoUrl = null);
+                          return;
+                        }
+                        final source = choice == 'camera' ? ImageSource.camera : ImageSource.gallery;
+                        setState(() => uploadingPhoto = true);
+                        try {
+                          final url = await ref.read(petPhotoUploaderProvider)(source);
+                          if (url != null) {
+                            setState(() => photoUrl = url);
+                          }
+                        } catch (error) {
+                          if (sheetContext.mounted) {
+                            ScaffoldMessenger.of(
+                              sheetContext,
+                            ).showSnackBar(SnackBar(content: Text('Erreur photo: $error')));
+                          }
+                        } finally {
+                          setState(() => uploadingPhoto = false);
+                        }
+                      },
+                icon: uploadingPhoto
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.camera_alt, size: 18),
+                label: Text(photoUrl == null ? 'Ajouter une photo' : 'Changer la photo'),
               ),
               TextField(
                 controller: nameController,
