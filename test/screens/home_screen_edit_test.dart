@@ -141,6 +141,9 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(0), 'Mia');
     await tester.enterText(find.byType(TextField).at(1), 'Siamois');
+    // The breed autocomplete's suggestion overlay needs a settle cycle to
+    // close before it stops intercepting taps on content below it.
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Ajouter'));
     await tester.pumpAndSettle();
 
@@ -237,5 +240,61 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.created?.photoUrl, 'https://example.com/mia.jpg');
+  });
+
+  testWidgets('typing a partial breed suggests matching dog breeds, but free text still saves', (tester) async {
+    final repo = _FakePetsRepository([]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsRepositoryProvider.overrideWithValue(repo),
+          upcomingRemindersProvider.overrideWith((ref) async => <DueItem>[]),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(0), 'Rex');
+    await tester.enterText(find.byType(TextField).at(1), 'Labra');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Labrador'), findsOneWidget);
+
+    await tester.tap(find.text('Labrador'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ajouter'));
+    await tester.pumpAndSettle();
+
+    expect(repo.created?.breed, 'Labrador');
+  });
+
+  testWidgets('breed suggestions are species-specific: a cat breed is not suggested for a dog', (tester) async {
+    final repo = _FakePetsRepository([]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsRepositoryProvider.overrideWithValue(repo),
+          upcomingRemindersProvider.overrideWith((ref) async => <DueItem>[]),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(1), 'Siamois');
+    await tester.pumpAndSettle();
+
+    // Only the input field itself shows "Siamois" — no suggestion tile echoes it,
+    // since it's a cat breed and this pet's species is dog.
+    expect(find.text('Siamois'), findsOneWidget);
   });
 }

@@ -5,9 +5,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../date_only.dart';
 import '../../../models/weight_entry.dart';
-import '../../../providers/weight_entries_provider.dart' show weightEntriesRepositoryProvider, weightEntriesProvider;
+import '../../../providers/weight_entries_provider.dart'
+    show weightEntriesRepositoryProvider, weightEntriesProvider;
 import '../../../theme.dart';
 import '../../../widgets/empty_state.dart';
+import '../../../widgets/record_leading_icon.dart';
 
 class WeightTab extends ConsumerWidget {
   const WeightTab({required this.petId, super.key});
@@ -37,10 +39,14 @@ class WeightTab extends ConsumerWidget {
             ? EmptyState(
                 illustration: SvgPicture.asset(
                   'assets/illustrations/no_weight_entries.svg',
-                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.muted,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 title: 'Aucune pesée enregistrée',
-                subtitle: 'Ajoute la première pesée avec le bouton + ci-dessous.',
+                subtitle:
+                    'Ajoute la première pesée avec le bouton + ci-dessous.',
               )
             : Column(
                 children: [
@@ -51,11 +57,19 @@ class WeightTab extends ConsumerWidget {
                       itemBuilder: (context, index) {
                         final entry = entries[index];
                         return ListTile(
+                          leading: const RecordLeadingIcon(
+                            icon: Icons.monitor_weight,
+                            color: AppColors.accentPositive,
+                          ),
                           title: Text('${entry.weightKg} kg'),
                           subtitle: Text(dateOnly(entry.recordedAt)),
                           trailing: IconButton(
                             icon: const Icon(Icons.edit),
-                            onPressed: () => _showAddWeightSheet(context, ref, existing: entry),
+                            onPressed: () => _showAddWeightSheet(
+                              context,
+                              ref,
+                              existing: entry,
+                            ),
                           ),
                         );
                       },
@@ -71,8 +85,14 @@ class WeightTab extends ConsumerWidget {
     );
   }
 
-  void _showAddWeightSheet(BuildContext context, WidgetRef ref, {WeightEntry? existing}) {
-    final weightController = TextEditingController(text: existing?.weightKg.toString() ?? '');
+  void _showAddWeightSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    WeightEntry? existing,
+  }) {
+    final weightController = TextEditingController(
+      text: existing?.weightKg.toString() ?? '',
+    );
     DateTime recordedAt = existing?.recordedAt ?? DateTime.now();
 
     showModalBottomSheet(
@@ -92,7 +112,9 @@ class WeightTab extends ConsumerWidget {
               TextField(
                 controller: weightController,
                 decoration: const InputDecoration(labelText: 'Poids (kg)'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               ListTile(
                 title: Text('Pesée le ${dateOnly(recordedAt)}'),
@@ -109,30 +131,41 @@ class WeightTab extends ConsumerWidget {
               ),
               FilledButton(
                 onPressed: () async {
-                  final weight = double.tryParse(weightController.text.replaceAll(',', '.'));
+                  final weight = double.tryParse(
+                    weightController.text.replaceAll(',', '.'),
+                  );
                   if (weight == null) return;
                   try {
                     if (existing == null) {
-                      await ref.read(weightEntriesRepositoryProvider).create(WeightEntry(
-                            id: '',
-                            petId: petId,
-                            weightKg: weight,
-                            recordedAt: recordedAt,
-                          ));
+                      await ref
+                          .read(weightEntriesRepositoryProvider)
+                          .create(
+                            WeightEntry(
+                              id: '',
+                              petId: petId,
+                              weightKg: weight,
+                              recordedAt: recordedAt,
+                            ),
+                          );
                     } else {
-                      await ref.read(weightEntriesRepositoryProvider).update(WeightEntry(
-                            id: existing.id,
-                            petId: petId,
-                            weightKg: weight,
-                            recordedAt: recordedAt,
-                          ));
+                      await ref
+                          .read(weightEntriesRepositoryProvider)
+                          .update(
+                            WeightEntry(
+                              id: existing.id,
+                              petId: petId,
+                              weightKg: weight,
+                              recordedAt: recordedAt,
+                            ),
+                          );
                     }
                     ref.invalidate(weightEntriesProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
                     if (sheetContext.mounted) {
-                      ScaffoldMessenger.of(sheetContext)
-                          .showSnackBar(SnackBar(content: Text('Erreur: $error')));
+                      ScaffoldMessenger.of(
+                        sheetContext,
+                      ).showSnackBar(SnackBar(content: Text('Erreur: $error')));
                     }
                   }
                 },
@@ -155,7 +188,10 @@ class _WeightChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final chronological = entries.reversed.toList();
     // num.clamp returns num, not double — SideTitles.interval needs an explicit toDouble().
-    final labelInterval = (chronological.length / 4).ceil().clamp(1, chronological.length).toDouble();
+    final labelInterval = (chronological.length / 4)
+        .ceil()
+        .clamp(1, chronological.length)
+        .toDouble();
 
     return SizedBox(
       height: 200,
@@ -166,16 +202,24 @@ class _WeightChart extends StatelessWidget {
             gridData: const FlGridData(drawVerticalLine: false),
             borderData: FlBorderData(show: false),
             titlesData: FlTitlesData(
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+              ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   interval: labelInterval,
                   getTitlesWidget: (value, meta) {
                     final index = value.toInt();
-                    if (index < 0 || index >= chronological.length) return const SizedBox.shrink();
+                    if (index < 0 || index >= chronological.length) {
+                      return const SizedBox.shrink();
+                    }
                     return Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(

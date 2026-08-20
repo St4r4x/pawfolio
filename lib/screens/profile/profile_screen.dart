@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/theme_mode_provider.dart';
+import '../../theme.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -15,8 +16,28 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          ListTile(leading: const Icon(Icons.email), title: Text(email)),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+            color: AppColors.primary,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.pets, color: Colors.white, size: 36),
+                const SizedBox(height: 12),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
             child: Text('Thème', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -25,19 +46,22 @@ class ProfileScreen extends ConsumerWidget {
             title: const Text('Système'),
             value: ThemeMode.system,
             groupValue: themeMode,
-            onChanged: (mode) => ref.read(themeModeProvider.notifier).setThemeMode(mode!),
+            onChanged: (mode) =>
+                ref.read(themeModeProvider.notifier).setThemeMode(mode!),
           ),
           RadioListTile<ThemeMode>(
             title: const Text('Clair'),
             value: ThemeMode.light,
             groupValue: themeMode,
-            onChanged: (mode) => ref.read(themeModeProvider.notifier).setThemeMode(mode!),
+            onChanged: (mode) =>
+                ref.read(themeModeProvider.notifier).setThemeMode(mode!),
           ),
           RadioListTile<ThemeMode>(
             title: const Text('Sombre'),
             value: ThemeMode.dark,
             groupValue: themeMode,
-            onChanged: (mode) => ref.read(themeModeProvider.notifier).setThemeMode(mode!),
+            onChanged: (mode) =>
+                ref.read(themeModeProvider.notifier).setThemeMode(mode!),
           ),
           const Divider(),
           ListTile(

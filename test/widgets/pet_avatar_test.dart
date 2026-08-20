@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawfolio/theme.dart';
 import 'package:pawfolio/widgets/pet_avatar.dart';
@@ -25,15 +26,30 @@ void main() {
     expect(avatar.backgroundColor, AppColors.muted);
   });
 
-  testWidgets('with no photoUrl, shows the species icon', (tester) async {
+  testWidgets('dog with no photoUrl shows the dog-face SVG glyph', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: PetAvatar(species: 'dog')));
 
     final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
     expect(avatar.backgroundImage, isNull);
+    expect(find.byType(SvgPicture), findsOneWidget);
+    expect(find.byIcon(Icons.pets), findsNothing);
+  });
+
+  testWidgets('cat with no photoUrl shows the cat-face SVG glyph', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: PetAvatar(species: 'cat')));
+
+    expect(find.byType(SvgPicture), findsOneWidget);
+    expect(find.byIcon(Icons.pets), findsNothing);
+  });
+
+  testWidgets('other species with no photoUrl falls back to the paw icon', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: PetAvatar(species: 'other')));
+
+    expect(find.byType(SvgPicture), findsNothing);
     expect(find.byIcon(Icons.pets), findsOneWidget);
   });
 
-  testWidgets('with a photoUrl, shows the photo instead of the icon', (tester) async {
+  testWidgets('with a photoUrl, shows the photo instead of any icon', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: PetAvatar(species: 'dog', photoUrl: 'https://example.com/rex.jpg')),
     );
@@ -41,6 +57,7 @@ void main() {
     final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
     final resized = avatar.backgroundImage as ResizeImage;
     expect(resized.imageProvider, isA<NetworkImage>().having((i) => i.url, 'url', 'https://example.com/rex.jpg'));
+    expect(find.byType(SvgPicture), findsNothing);
     expect(find.byIcon(Icons.pets), findsNothing);
   });
 }

@@ -7,6 +7,7 @@ import '../../../models/treatment.dart';
 import '../../../providers/treatments_provider.dart';
 import '../../../theme.dart';
 import '../../../widgets/empty_state.dart';
+import '../../../widgets/record_leading_icon.dart';
 
 class TreatmentsTab extends ConsumerWidget {
   const TreatmentsTab({required this.petId, super.key});
@@ -42,10 +43,14 @@ class TreatmentsTab extends ConsumerWidget {
             ? EmptyState(
                 illustration: SvgPicture.asset(
                   'assets/illustrations/no_treatments.svg',
-                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.muted,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 title: 'Aucun traitement enregistré',
-                subtitle: 'Ajoute le premier traitement avec le bouton + ci-dessous.',
+                subtitle:
+                    'Ajoute le premier traitement avec le bouton + ci-dessous.',
               )
             : ListView.builder(
                 itemCount: treatments.length,
@@ -53,6 +58,10 @@ class TreatmentsTab extends ConsumerWidget {
                   final treatment = treatments[index];
                   final nextDue = treatment.nextDueDate;
                   return ListTile(
+                    leading: const RecordLeadingIcon(
+                      icon: Icons.medication,
+                      color: AppColors.warningDueSoon,
+                    ),
                     title: Text(treatment.name),
                     subtitle: Text(
                       '${_typeLabels[treatment.type]} · fait le ${dateOnly(treatment.dateGiven)}'
@@ -60,7 +69,11 @@ class TreatmentsTab extends ConsumerWidget {
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit),
-                      onPressed: () => _showAddTreatmentSheet(context, ref, existing: treatment),
+                      onPressed: () => _showAddTreatmentSheet(
+                        context,
+                        ref,
+                        existing: treatment,
+                      ),
                     ),
                   );
                 },
@@ -73,7 +86,11 @@ class TreatmentsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddTreatmentSheet(BuildContext context, WidgetRef ref, {Treatment? existing}) {
+  void _showAddTreatmentSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    Treatment? existing,
+  }) {
     final nameController = TextEditingController(text: existing?.name ?? '');
     String type = existing?.type ?? 'dewormer';
     DateTime dateGiven = existing?.dateGiven ?? DateTime.now();
@@ -95,12 +112,19 @@ class TreatmentsTab extends ConsumerWidget {
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nom du traitement'),
+                decoration: const InputDecoration(
+                  labelText: 'Nom du traitement',
+                ),
               ),
               DropdownButton<String>(
                 value: type,
                 items: _typeLabels.entries
-                    .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))
+                    .map(
+                      (entry) => DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
                     .toList(),
                 onChanged: (value) => setState(() => type = value!),
               ),
@@ -118,7 +142,11 @@ class TreatmentsTab extends ConsumerWidget {
                 },
               ),
               ListTile(
-                title: Text(nextDueDate == null ? 'Pas de rappel' : 'Rappel le ${dateOnly(nextDueDate!)}'),
+                title: Text(
+                  nextDueDate == null
+                      ? 'Pas de rappel'
+                      : 'Rappel le ${dateOnly(nextDueDate!)}',
+                ),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -135,31 +163,40 @@ class TreatmentsTab extends ConsumerWidget {
                   if (nameController.text.trim().isEmpty) return;
                   try {
                     if (existing == null) {
-                      await ref.read(treatmentsRepositoryProvider).create(Treatment(
-                            id: '',
-                            petId: petId,
-                            type: type,
-                            name: nameController.text.trim(),
-                            dateGiven: dateGiven,
-                            nextDueDate: nextDueDate,
-                          ));
+                      await ref
+                          .read(treatmentsRepositoryProvider)
+                          .create(
+                            Treatment(
+                              id: '',
+                              petId: petId,
+                              type: type,
+                              name: nameController.text.trim(),
+                              dateGiven: dateGiven,
+                              nextDueDate: nextDueDate,
+                            ),
+                          );
                     } else {
-                      await ref.read(treatmentsRepositoryProvider).update(Treatment(
-                            id: existing.id,
-                            petId: petId,
-                            type: type,
-                            name: nameController.text.trim(),
-                            dateGiven: dateGiven,
-                            nextDueDate: nextDueDate,
-                            notes: existing.notes,
-                          ));
+                      await ref
+                          .read(treatmentsRepositoryProvider)
+                          .update(
+                            Treatment(
+                              id: existing.id,
+                              petId: petId,
+                              type: type,
+                              name: nameController.text.trim(),
+                              dateGiven: dateGiven,
+                              nextDueDate: nextDueDate,
+                              notes: existing.notes,
+                            ),
+                          );
                     }
                     ref.invalidate(treatmentsProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
                     if (sheetContext.mounted) {
-                      ScaffoldMessenger.of(sheetContext)
-                          .showSnackBar(SnackBar(content: Text('Erreur: $error')));
+                      ScaffoldMessenger.of(
+                        sheetContext,
+                      ).showSnackBar(SnackBar(content: Text('Erreur: $error')));
                     }
                   }
                 },

@@ -7,6 +7,7 @@ import '../../../models/vet_visit.dart';
 import '../../../providers/vet_visits_provider.dart';
 import '../../../theme.dart';
 import '../../../widgets/empty_state.dart';
+import '../../../widgets/record_leading_icon.dart';
 
 class VetVisitsTab extends ConsumerWidget {
   const VetVisitsTab({required this.petId, super.key});
@@ -36,7 +37,10 @@ class VetVisitsTab extends ConsumerWidget {
             ? EmptyState(
                 illustration: SvgPicture.asset(
                   'assets/illustrations/no_vet_visits.svg',
-                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.muted,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 title: 'Aucun rendez-vous enregistré',
                 subtitle: 'Ajoute le premier rendez-vous avec le bouton + ci-dessous.',
@@ -47,6 +51,10 @@ class VetVisitsTab extends ConsumerWidget {
                   final visit = visits[index];
                   final nextVisit = visit.nextVisitDate;
                   return ListTile(
+                    leading: const RecordLeadingIcon(
+                      icon: Icons.local_hospital,
+                      color: AppColors.primary,
+                    ),
                     title: Text(visit.reason),
                     subtitle: Text(
                       'Le ${dateOnly(visit.visitDate)}'
@@ -54,7 +62,8 @@ class VetVisitsTab extends ConsumerWidget {
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit),
-                      onPressed: () => _showAddVisitSheet(context, ref, existing: visit),
+                      onPressed: () =>
+                          _showAddVisitSheet(context, ref, existing: visit),
                     ),
                   );
                 },
@@ -67,8 +76,14 @@ class VetVisitsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddVisitSheet(BuildContext context, WidgetRef ref, {VetVisit? existing}) {
-    final reasonController = TextEditingController(text: existing?.reason ?? '');
+  void _showAddVisitSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    VetVisit? existing,
+  }) {
+    final reasonController = TextEditingController(
+      text: existing?.reason ?? '',
+    );
     DateTime visitDate = existing?.visitDate ?? DateTime.now();
     DateTime? nextVisitDate = existing?.nextVisitDate;
 
@@ -105,7 +120,9 @@ class VetVisitsTab extends ConsumerWidget {
               ),
               ListTile(
                 title: Text(
-                  nextVisitDate == null ? 'Pas de prochain RDV' : 'Prochain RDV le ${dateOnly(nextVisitDate!)}',
+                  nextVisitDate == null
+                      ? 'Pas de prochain RDV'
+                      : 'Prochain RDV le ${dateOnly(nextVisitDate!)}',
                 ),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
@@ -123,29 +140,38 @@ class VetVisitsTab extends ConsumerWidget {
                   if (reasonController.text.trim().isEmpty) return;
                   try {
                     if (existing == null) {
-                      await ref.read(vetVisitsRepositoryProvider).create(VetVisit(
-                            id: '',
-                            petId: petId,
-                            visitDate: visitDate,
-                            reason: reasonController.text.trim(),
-                            nextVisitDate: nextVisitDate,
-                          ));
+                      await ref
+                          .read(vetVisitsRepositoryProvider)
+                          .create(
+                            VetVisit(
+                              id: '',
+                              petId: petId,
+                              visitDate: visitDate,
+                              reason: reasonController.text.trim(),
+                              nextVisitDate: nextVisitDate,
+                            ),
+                          );
                     } else {
-                      await ref.read(vetVisitsRepositoryProvider).update(VetVisit(
-                            id: existing.id,
-                            petId: petId,
-                            visitDate: visitDate,
-                            reason: reasonController.text.trim(),
-                            nextVisitDate: nextVisitDate,
-                            notes: existing.notes,
-                          ));
+                      await ref
+                          .read(vetVisitsRepositoryProvider)
+                          .update(
+                            VetVisit(
+                              id: existing.id,
+                              petId: petId,
+                              visitDate: visitDate,
+                              reason: reasonController.text.trim(),
+                              nextVisitDate: nextVisitDate,
+                              notes: existing.notes,
+                            ),
+                          );
                     }
                     ref.invalidate(vetVisitsProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
                     if (sheetContext.mounted) {
-                      ScaffoldMessenger.of(sheetContext)
-                          .showSnackBar(SnackBar(content: Text('Erreur: $error')));
+                      ScaffoldMessenger.of(
+                        sheetContext,
+                      ).showSnackBar(SnackBar(content: Text('Erreur: $error')));
                     }
                   }
                 },

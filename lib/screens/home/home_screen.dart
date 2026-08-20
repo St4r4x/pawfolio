@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../data/breeds.dart';
 import '../../date_only.dart';
 import '../../models/pet.dart';
 import '../../motion.dart';
@@ -157,47 +158,63 @@ class HomeScreen extends ConsumerWidget {
                                 horizontal: 8,
                                 vertical: 4,
                               ),
-                              child: ListTile(
-                                leading: PetAvatar(species: pet.species, photoUrl: pet.photoUrl),
-                                title: Text(pet.name),
-                                subtitle: Text(pet.species),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (earliestReminderByPet[pet.id] != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 4,
-                                        ),
-                                        child: Chip(
-                                          label: Text(
-                                            earliestReminderByPet[pet.id]!
-                                                .label,
-                                          ),
-                                          backgroundColor: urgencyColor(
-                                            reminderUrgency(
-                                              earliestReminderByPet[pet.id]!
-                                                  .dueDate,
-                                            ),
-                                          ),
-                                          labelStyle: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 11,
-                                          ),
-                                          visualDensity: VisualDensity.compact,
-                                        ),
-                                      ),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit),
-                                      onPressed: () => _showAddPetSheet(
-                                        context,
-                                        ref,
-                                        existing: pet,
-                                      ),
+                              elevation: 2,
+                              clipBehavior: Clip.antiAlias,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: speciesAccentColor(pet.species),
+                                      width: 4,
                                     ),
-                                  ],
+                                  ),
                                 ),
-                                onTap: () => context.push('/pets/${pet.id}'),
+                                child: ListTile(
+                                  leading: PetAvatar(
+                                    species: pet.species,
+                                    photoUrl: pet.photoUrl,
+                                  ),
+                                  title: Text(pet.name),
+                                  subtitle: Text(pet.species),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (earliestReminderByPet[pet.id] != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 4,
+                                          ),
+                                          child: Chip(
+                                            label: Text(
+                                              earliestReminderByPet[pet.id]!
+                                                  .label,
+                                            ),
+                                            backgroundColor: urgencyColor(
+                                              reminderUrgency(
+                                                earliestReminderByPet[pet.id]!
+                                                    .dueDate,
+                                              ),
+                                            ),
+                                            labelStyle: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                            ),
+                                            visualDensity:
+                                                VisualDensity.compact,
+                                          ),
+                                        ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () => _showAddPetSheet(
+                                          context,
+                                          ref,
+                                          existing: pet,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  onTap: () => context.push('/pets/${pet.id}'),
+                                ),
                               ),
                             ),
                         ],
@@ -214,7 +231,10 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<String?> _showPhotoSourceSheet(BuildContext context, {required bool hasPhoto}) {
+  Future<String?> _showPhotoSourceSheet(
+    BuildContext context, {
+    required bool hasPhoto,
+  }) {
     return showModalBottomSheet<String>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -233,8 +253,14 @@ class HomeScreen extends ConsumerWidget {
             ),
             if (hasPhoto)
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: AppColors.error),
-                title: const Text('Supprimer la photo', style: TextStyle(color: AppColors.error)),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.error,
+                ),
+                title: const Text(
+                  'Supprimer la photo',
+                  style: TextStyle(color: AppColors.error),
+                ),
                 onTap: () => Navigator.of(sheetContext).pop('delete'),
               ),
           ],
@@ -246,6 +272,7 @@ class HomeScreen extends ConsumerWidget {
   void _showAddPetSheet(BuildContext context, WidgetRef ref, {Pet? existing}) {
     final nameController = TextEditingController(text: existing?.name ?? '');
     final breedController = TextEditingController(text: existing?.breed ?? '');
+    final breedFocusNode = FocusNode();
     String species = existing?.species ?? 'dog';
     DateTime? birthDate = existing?.birthDate;
     String? photoUrl = existing?.photoUrl;
@@ -267,45 +294,81 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Stack(
                 alignment: Alignment.center,
+                clipBehavior: Clip.none,
                 children: [
-                  PetAvatar(species: species, radius: avatarRadius, photoUrl: photoUrl),
+                  PetAvatar(
+                    species: species,
+                    radius: avatarRadius,
+                    photoUrl: photoUrl,
+                  ),
                   if (uploadingPhoto)
                     Container(
                       width: avatarRadius * 2,
                       height: avatarRadius * 2,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black38),
-                      child: const CircularProgressIndicator(color: Colors.white),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black38,
+                      ),
+                      child: const CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
                     ),
                   Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: IconButton.filled(
-                      icon: const Icon(Icons.camera_alt, size: 18),
-                      style: IconButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-                      onPressed: uploadingPhoto
-                          ? null
-                          : () async {
-                              final choice = await _showPhotoSourceSheet(sheetContext, hasPhoto: photoUrl != null);
-                              if (choice == null) return;
-                              if (choice == 'delete') {
-                                setState(() => photoUrl = null);
-                                return;
-                              }
-                              final source = choice == 'camera' ? ImageSource.camera : ImageSource.gallery;
-                              setState(() => uploadingPhoto = true);
-                              try {
-                                final url = await ref.read(petPhotoUploaderProvider)(source);
-                                if (url != null) setState(() => photoUrl = url);
-                              } catch (error) {
-                                if (sheetContext.mounted) {
-                                  ScaffoldMessenger.of(
-                                    sheetContext,
-                                  ).showSnackBar(SnackBar(content: Text('Erreur photo: $error')));
+                    bottom: -6,
+                    right: -6,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      child: IconButton.filled(
+                        icon: const Icon(Icons.camera_alt, size: 16),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(28, 28),
+                          padding: EdgeInsets.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: uploadingPhoto
+                            ? null
+                            : () async {
+                                final choice = await _showPhotoSourceSheet(
+                                  sheetContext,
+                                  hasPhoto: photoUrl != null,
+                                );
+                                if (choice == null) return;
+                                if (choice == 'delete') {
+                                  setState(() => photoUrl = null);
+                                  return;
                                 }
-                              } finally {
-                                setState(() => uploadingPhoto = false);
-                              }
-                            },
+                                final source = choice == 'camera'
+                                    ? ImageSource.camera
+                                    : ImageSource.gallery;
+                                setState(() => uploadingPhoto = true);
+                                try {
+                                  final url = await ref.read(
+                                    petPhotoUploaderProvider,
+                                  )(source);
+                                  if (url != null) {
+                                    setState(() => photoUrl = url);
+                                  }
+                                } catch (error) {
+                                  if (sheetContext.mounted) {
+                                    ScaffoldMessenger.of(
+                                      sheetContext,
+                                    ).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Erreur photo: $error'),
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  setState(() => uploadingPhoto = false);
+                                }
+                              },
+                      ),
                     ),
                   ),
                 ],
@@ -318,9 +381,25 @@ class HomeScreen extends ConsumerWidget {
                 value: species,
                 onChanged: (value) => setState(() => species = value),
               ),
-              TextField(
-                controller: breedController,
-                decoration: const InputDecoration(labelText: 'Race'),
+              Autocomplete<String>(
+                textEditingController: breedController,
+                focusNode: breedFocusNode,
+                optionsBuilder: (value) {
+                  final options = breedsForSpecies(species);
+                  final query = value.text.toLowerCase();
+                  if (query.isEmpty) return options;
+                  return options.where(
+                    (breed) => breed.toLowerCase().contains(query),
+                  );
+                },
+                fieldViewBuilder:
+                    (context, controller, focusNode, onFieldSubmitted) {
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(labelText: 'Race'),
+                      );
+                    },
               ),
               ListTile(
                 title: Text(

@@ -7,6 +7,7 @@ import '../../../models/vaccination.dart';
 import '../../../providers/vaccinations_provider.dart';
 import '../../../theme.dart';
 import '../../../widgets/empty_state.dart';
+import '../../../widgets/record_leading_icon.dart';
 
 class VaccinationsTab extends ConsumerWidget {
   const VaccinationsTab({required this.petId, super.key});
@@ -36,10 +37,14 @@ class VaccinationsTab extends ConsumerWidget {
             ? EmptyState(
                 illustration: SvgPicture.asset(
                   'assets/illustrations/no_vaccinations.svg',
-                  colorFilter: const ColorFilter.mode(AppColors.muted, BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.muted,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 title: 'Aucun vaccin enregistré',
-                subtitle: 'Ajoute le premier vaccin avec le bouton + ci-dessous.',
+                subtitle:
+                    'Ajoute le premier vaccin avec le bouton + ci-dessous.',
               )
             : ListView.builder(
                 itemCount: vaccinations.length,
@@ -47,6 +52,10 @@ class VaccinationsTab extends ConsumerWidget {
                   final vaccination = vaccinations[index];
                   final nextDue = vaccination.nextDueDate;
                   return ListTile(
+                    leading: const RecordLeadingIcon(
+                      icon: Icons.vaccines,
+                      color: AppColors.accentPositive,
+                    ),
                     title: Text(vaccination.name),
                     subtitle: Text(
                       'Fait le ${dateOnly(vaccination.dateAdministered)}'
@@ -54,7 +63,11 @@ class VaccinationsTab extends ConsumerWidget {
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit),
-                      onPressed: () => _showAddVaccinationSheet(context, ref, existing: vaccination),
+                      onPressed: () => _showAddVaccinationSheet(
+                        context,
+                        ref,
+                        existing: vaccination,
+                      ),
                     ),
                   );
                 },
@@ -67,7 +80,11 @@ class VaccinationsTab extends ConsumerWidget {
     );
   }
 
-  void _showAddVaccinationSheet(BuildContext context, WidgetRef ref, {Vaccination? existing}) {
+  void _showAddVaccinationSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    Vaccination? existing,
+  }) {
     final nameController = TextEditingController(text: existing?.name ?? '');
     DateTime dateAdministered = existing?.dateAdministered ?? DateTime.now();
     DateTime? nextDueDate = existing?.nextDueDate;
@@ -104,7 +121,11 @@ class VaccinationsTab extends ConsumerWidget {
                 },
               ),
               ListTile(
-                title: Text(nextDueDate == null ? 'Pas de rappel' : 'Rappel le ${dateOnly(nextDueDate!)}'),
+                title: Text(
+                  nextDueDate == null
+                      ? 'Pas de rappel'
+                      : 'Rappel le ${dateOnly(nextDueDate!)}',
+                ),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -121,29 +142,38 @@ class VaccinationsTab extends ConsumerWidget {
                   if (nameController.text.trim().isEmpty) return;
                   try {
                     if (existing == null) {
-                      await ref.read(vaccinationsRepositoryProvider).create(Vaccination(
-                            id: '',
-                            petId: petId,
-                            name: nameController.text.trim(),
-                            dateAdministered: dateAdministered,
-                            nextDueDate: nextDueDate,
-                          ));
+                      await ref
+                          .read(vaccinationsRepositoryProvider)
+                          .create(
+                            Vaccination(
+                              id: '',
+                              petId: petId,
+                              name: nameController.text.trim(),
+                              dateAdministered: dateAdministered,
+                              nextDueDate: nextDueDate,
+                            ),
+                          );
                     } else {
-                      await ref.read(vaccinationsRepositoryProvider).update(Vaccination(
-                            id: existing.id,
-                            petId: petId,
-                            name: nameController.text.trim(),
-                            dateAdministered: dateAdministered,
-                            nextDueDate: nextDueDate,
-                            notes: existing.notes,
-                          ));
+                      await ref
+                          .read(vaccinationsRepositoryProvider)
+                          .update(
+                            Vaccination(
+                              id: existing.id,
+                              petId: petId,
+                              name: nameController.text.trim(),
+                              dateAdministered: dateAdministered,
+                              nextDueDate: nextDueDate,
+                              notes: existing.notes,
+                            ),
+                          );
                     }
                     ref.invalidate(vaccinationsProvider(petId));
                     if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   } catch (error) {
                     if (sheetContext.mounted) {
-                      ScaffoldMessenger.of(sheetContext)
-                          .showSnackBar(SnackBar(content: Text('Erreur: $error')));
+                      ScaffoldMessenger.of(
+                        sheetContext,
+                      ).showSnackBar(SnackBar(content: Text('Erreur: $error')));
                     }
                   }
                 },

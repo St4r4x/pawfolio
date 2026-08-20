@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   old value.
 
 ### Added
+- Species-specific dog/cat icons on pet avatars (in place of the single
+  generic paw icon), a breed autocomplete with curated dog/cat breed
+  suggestions (still free text for anything not listed, or for other
+  species), a repositioned photo-picker badge that no longer covers most of
+  the avatar, and more visual texture across the app: a colored,
+  species-tinted accent on Home's pet cards, a colored profile header, and
+  colored leading icons on the vaccinations/treatments/vet-visits/weight
+  entry lists.
 - Photo per pet: take a picture or choose one from the gallery in the
   add/edit pet sheet, shown on the Home list and pet detail header in place
   of the generic species icon, with an option to remove it.

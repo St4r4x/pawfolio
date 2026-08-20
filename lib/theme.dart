@@ -17,6 +17,13 @@ class AppColors {
   static const border = Color(0xFFE8DED9);
 }
 
+/// Accent color by pet species — shared by [PetAvatar] and the Home pet list.
+Color speciesAccentColor(String species) => switch (species) {
+  'dog' => AppColors.primary,
+  'cat' => AppColors.accentPositive,
+  _ => AppColors.muted,
+};
+
 // ponytail: ColorScheme.fromSeed generates a full Material 3 tonal palette
 // (secondary, tertiary, outline, surface variants, etc.) from one seed
 // color; only the roles the design spec pins down explicitly are
@@ -71,7 +78,9 @@ final pawfolioDarkTheme = ThemeData(
     error: AppColorsDark.error,
     onError: AppColorsDark.onError,
   ),
-  textTheme: GoogleFonts.manropeTextTheme(ThemeData(brightness: Brightness.dark).textTheme),
+  textTheme: GoogleFonts.manropeTextTheme(
+    ThemeData(brightness: Brightness.dark).textTheme,
+  ),
   cardColor: AppColorsDark.surface,
   dividerColor: AppColorsDark.border,
 );
