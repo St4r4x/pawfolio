@@ -24,4 +24,23 @@ void main() {
     final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
     expect(avatar.backgroundColor, AppColors.muted);
   });
+
+  testWidgets('with no photoUrl, shows the species icon', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: PetAvatar(species: 'dog')));
+
+    final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
+    expect(avatar.backgroundImage, isNull);
+    expect(find.byIcon(Icons.pets), findsOneWidget);
+  });
+
+  testWidgets('with a photoUrl, shows the photo instead of the icon', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: PetAvatar(species: 'dog', photoUrl: 'https://example.com/rex.jpg')),
+    );
+
+    final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
+    final resized = avatar.backgroundImage as ResizeImage;
+    expect(resized.imageProvider, isA<NetworkImage>().having((i) => i.url, 'url', 'https://example.com/rex.jpg'));
+    expect(find.byIcon(Icons.pets), findsNothing);
+  });
 }

@@ -42,7 +42,7 @@ class PetDetailScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (pet != null) ...[
-                PetAvatar(species: pet.species, radius: 16),
+                PetAvatar(species: pet.species, radius: 16, photoUrl: pet.photoUrl),
                 const SizedBox(width: 8),
               ],
               Text(pet?.name ?? 'Animal'),

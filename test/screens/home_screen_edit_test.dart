@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawfolio/models/pet.dart';
+import 'package:pawfolio/providers/pet_photo_uploader_provider.dart';
 import 'package:pawfolio/providers/pets_provider.dart';
 import 'package:pawfolio/providers/reminders_provider.dart';
 import 'package:pawfolio/reminders.dart';
@@ -144,5 +145,97 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.created?.breed, 'Siamois');
+  });
+
+  testWidgets('the delete-photo option only appears when the pet already has a photo', (tester) async {
+    final pet = const Pet(id: 'p1', ownerId: 'u1', name: 'Rex', species: 'dog');
+    final repo = _FakePetsRepository([pet]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsRepositoryProvider.overrideWithValue(repo),
+          upcomingRemindersProvider.overrideWith((ref) async => <DueItem>[]),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.edit));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.camera_alt).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Supprimer la photo'), findsNothing);
+  });
+
+  testWidgets('deleting the photo clears photoUrl on save', (tester) async {
+    final pet = const Pet(
+      id: 'p1',
+      ownerId: 'u1',
+      name: 'Rex',
+      species: 'dog',
+      photoUrl: 'https://example.com/rex.jpg',
+    );
+    final repo = _FakePetsRepository([pet]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsRepositoryProvider.overrideWithValue(repo),
+          upcomingRemindersProvider.overrideWith((ref) async => <DueItem>[]),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.edit));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.camera_alt).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Supprimer la photo'), findsOneWidget);
+    await tester.tap(find.text('Supprimer la photo'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    expect(repo.updated?.photoUrl, isNull);
+  });
+
+  testWidgets('choosing a gallery photo uploads it and saves the returned URL', (tester) async {
+    final repo = _FakePetsRepository([]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsRepositoryProvider.overrideWithValue(repo),
+          upcomingRemindersProvider.overrideWith((ref) async => <DueItem>[]),
+          petPhotoUploaderProvider.overrideWithValue((source) async => 'https://example.com/mia.jpg'),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.camera_alt).last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Choisir dans la galerie'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(0), 'Mia');
+    await tester.tap(find.text('Ajouter'));
+    await tester.pumpAndSettle();
+
+    expect(repo.created?.photoUrl, 'https://example.com/mia.jpg');
   });
 }

@@ -10,8 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Pets, vaccinations, treatments, vet visits, and weight entries no longer
   show stale data from a previously signed-in account after switching
   accounts within the same running session.
+- Clearing the breed or birth date on an existing pet (emptying the field in
+  the edit sheet) is now actually saved, instead of silently reverting to the
+  old value.
 
 ### Added
+- Photo per pet: take a picture or choose one from the gallery in the
+  add/edit pet sheet, shown on the Home list and pet detail header in place
+  of the generic species icon, with an option to remove it.
 - Set-new-password screen, completing the forgot-password flow: clicking
   the reset-password email link now routes to a screen to actually type a
   new password, instead of silently logging in on Home with the old one

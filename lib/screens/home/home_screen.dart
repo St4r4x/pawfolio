@@ -3,11 +3,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../date_only.dart';
 import '../../models/pet.dart';
 import '../../motion.dart';
 import '../../notifications/reminder_scheduler.dart';
+import '../../providers/pet_photo_uploader_provider.dart';
 import '../../providers/pets_provider.dart';
 import '../../providers/reminders_provider.dart';
 import '../../reminders.dart';
@@ -156,7 +158,7 @@ class HomeScreen extends ConsumerWidget {
                                 vertical: 4,
                               ),
                               child: ListTile(
-                                leading: PetAvatar(species: pet.species),
+                                leading: PetAvatar(species: pet.species, photoUrl: pet.photoUrl),
                                 title: Text(pet.name),
                                 subtitle: Text(pet.species),
                                 trailing: Row(
@@ -212,11 +214,43 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Future<String?> _showPhotoSourceSheet(BuildContext context, {required bool hasPhoto}) {
+    return showModalBottomSheet<String>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Prendre une photo'),
+              onTap: () => Navigator.of(sheetContext).pop('camera'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choisir dans la galerie'),
+              onTap: () => Navigator.of(sheetContext).pop('gallery'),
+            ),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                title: const Text('Supprimer la photo', style: TextStyle(color: AppColors.error)),
+                onTap: () => Navigator.of(sheetContext).pop('delete'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAddPetSheet(BuildContext context, WidgetRef ref, {Pet? existing}) {
     final nameController = TextEditingController(text: existing?.name ?? '');
     final breedController = TextEditingController(text: existing?.breed ?? '');
     String species = existing?.species ?? 'dog';
     DateTime? birthDate = existing?.birthDate;
+    String? photoUrl = existing?.photoUrl;
+    bool uploadingPhoto = false;
+    const avatarRadius = 32.0;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -231,6 +265,51 @@ class HomeScreen extends ConsumerWidget {
           builder: (sheetContext, setState) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  PetAvatar(species: species, radius: avatarRadius, photoUrl: photoUrl),
+                  if (uploadingPhoto)
+                    Container(
+                      width: avatarRadius * 2,
+                      height: avatarRadius * 2,
+                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black38),
+                      child: const CircularProgressIndicator(color: Colors.white),
+                    ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: IconButton.filled(
+                      icon: const Icon(Icons.camera_alt, size: 18),
+                      style: IconButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                      onPressed: uploadingPhoto
+                          ? null
+                          : () async {
+                              final choice = await _showPhotoSourceSheet(sheetContext, hasPhoto: photoUrl != null);
+                              if (choice == null) return;
+                              if (choice == 'delete') {
+                                setState(() => photoUrl = null);
+                                return;
+                              }
+                              final source = choice == 'camera' ? ImageSource.camera : ImageSource.gallery;
+                              setState(() => uploadingPhoto = true);
+                              try {
+                                final url = await ref.read(petPhotoUploaderProvider)(source);
+                                if (url != null) setState(() => photoUrl = url);
+                              } catch (error) {
+                                if (sheetContext.mounted) {
+                                  ScaffoldMessenger.of(
+                                    sheetContext,
+                                  ).showSnackBar(SnackBar(content: Text('Erreur photo: $error')));
+                                }
+                              } finally {
+                                setState(() => uploadingPhoto = false);
+                              }
+                            },
+                    ),
+                  ),
+                ],
+              ),
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'Nom'),
@@ -277,6 +356,7 @@ class HomeScreen extends ConsumerWidget {
                               species: species,
                               breed: breed,
                               birthDate: birthDate,
+                              photoUrl: photoUrl,
                             ),
                           );
                     } else {
@@ -290,6 +370,7 @@ class HomeScreen extends ConsumerWidget {
                               species: species,
                               breed: breed,
                               birthDate: birthDate,
+                              photoUrl: photoUrl,
                             ),
                           );
                     }

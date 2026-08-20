@@ -8,6 +8,7 @@ class Pet {
     required this.species,
     this.breed,
     this.birthDate,
+    this.photoUrl,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class Pet {
   final String species;
   final String? breed;
   final DateTime? birthDate;
+  final String? photoUrl;
 
   factory Pet.fromJson(Map<String, dynamic> json) => Pet(
         id: json['id'] as String,
@@ -24,13 +26,17 @@ class Pet {
         species: json['species'] as String,
         breed: json['breed'] as String?,
         birthDate: json['birth_date'] == null ? null : DateTime.parse(json['birth_date'] as String),
+        photoUrl: json['photo_url'] as String?,
       );
 
+  // Always sent, even when null: toInsertJson is reused for update(), and an
+  // omitted key leaves the existing column untouched instead of clearing it.
   Map<String, dynamic> toInsertJson({required String ownerId}) => {
         'owner_id': ownerId,
         'name': name,
         'species': species,
-        if (breed != null) 'breed': breed,
-        if (birthDate != null) 'birth_date': dateOnly(birthDate!),
+        'breed': breed,
+        'birth_date': birthDate == null ? null : dateOnly(birthDate!),
+        'photo_url': photoUrl,
       };
 }
