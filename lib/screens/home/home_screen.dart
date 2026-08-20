@@ -283,142 +283,155 @@ class HomeScreen extends ConsumerWidget {
           bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
         ),
         child: StatefulBuilder(
-          builder: (sheetContext, setState) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PetAvatar(species: species, radius: avatarRadius, photoUrl: photoUrl),
-              TextButton.icon(
-                onPressed: uploadingPhoto
-                    ? null
-                    : () async {
-                        final choice = await _showPhotoSourceSheet(
-                          sheetContext,
-                          hasPhoto: photoUrl != null,
-                        );
-                        if (choice == null) return;
-                        if (choice == 'delete') {
-                          setState(() => photoUrl = null);
-                          return;
-                        }
-                        final source = choice == 'camera' ? ImageSource.camera : ImageSource.gallery;
-                        setState(() => uploadingPhoto = true);
-                        try {
-                          final url = await ref.read(petPhotoUploaderProvider)(source);
-                          if (url != null) {
-                            setState(() => photoUrl = url);
-                          }
-                        } catch (error) {
-                          if (sheetContext.mounted) {
-                            ScaffoldMessenger.of(
-                              sheetContext,
-                            ).showSnackBar(SnackBar(content: Text('Erreur photo: $error')));
-                          }
-                        } finally {
-                          setState(() => uploadingPhoto = false);
-                        }
-                      },
-                icon: uploadingPhoto
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.camera_alt, size: 18),
-                label: Text(photoUrl == null ? 'Ajouter une photo' : 'Changer la photo'),
-              ),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nom'),
-              ),
-              SpeciesDropdown(
-                value: species,
-                onChanged: (value) => setState(() => species = value),
-              ),
-              Autocomplete<String>(
-                textEditingController: breedController,
-                focusNode: breedFocusNode,
-                optionsBuilder: (value) {
-                  final options = breedsForSpecies(species);
-                  final query = value.text.toLowerCase();
-                  if (query.isEmpty) return options;
-                  return options.where(
-                    (breed) => breed.toLowerCase().contains(query),
-                  );
-                },
-                fieldViewBuilder:
-                    (context, controller, focusNode, onFieldSubmitted) {
-                      return TextField(
-                        controller: controller,
-                        focusNode: focusNode,
-                        decoration: const InputDecoration(labelText: 'Race'),
-                      );
-                    },
-              ),
-              ListTile(
-                title: Text(
-                  birthDate == null
-                      ? 'Date de naissance (facultatif)'
-                      : 'Né(e) le ${dateOnly(birthDate!)}',
+          builder: (sheetContext, setState) => SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PetAvatar(
+                  species: species,
+                  radius: avatarRadius,
+                  photoUrl: photoUrl,
                 ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: sheetContext,
-                    initialDate: birthDate ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null) setState(() => birthDate = picked);
-                },
-              ),
-              FilledButton(
-                onPressed: () async {
-                  if (nameController.text.trim().isEmpty) return;
-                  final trimmedBreed = breedController.text.trim();
-                  final breed = trimmedBreed.isEmpty ? null : trimmedBreed;
-                  try {
-                    if (existing == null) {
-                      await ref
-                          .read(petsRepositoryProvider)
-                          .create(
-                            Pet(
-                              id: '',
-                              ownerId: '',
-                              name: nameController.text.trim(),
-                              species: species,
-                              breed: breed,
-                              birthDate: birthDate,
-                              photoUrl: photoUrl,
-                            ),
+                TextButton.icon(
+                  onPressed: uploadingPhoto
+                      ? null
+                      : () async {
+                          final choice = await _showPhotoSourceSheet(
+                            sheetContext,
+                            hasPhoto: photoUrl != null,
                           );
-                    } else {
-                      await ref
-                          .read(petsRepositoryProvider)
-                          .update(
-                            Pet(
-                              id: existing.id,
-                              ownerId: existing.ownerId,
-                              name: nameController.text.trim(),
-                              species: species,
-                              breed: breed,
-                              birthDate: birthDate,
-                              photoUrl: photoUrl,
-                            ),
-                          );
+                          if (choice == null) return;
+                          if (choice == 'delete') {
+                            setState(() => photoUrl = null);
+                            return;
+                          }
+                          final source = choice == 'camera'
+                              ? ImageSource.camera
+                              : ImageSource.gallery;
+                          setState(() => uploadingPhoto = true);
+                          try {
+                            final url = await ref.read(
+                              petPhotoUploaderProvider,
+                            )(source);
+                            if (url != null) {
+                              setState(() => photoUrl = url);
+                            }
+                          } catch (error) {
+                            if (sheetContext.mounted) {
+                              ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                SnackBar(content: Text('Erreur photo: $error')),
+                              );
+                            }
+                          } finally {
+                            setState(() => uploadingPhoto = false);
+                          }
+                        },
+                  icon: uploadingPhoto
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.camera_alt, size: 18),
+                  label: Text(
+                    photoUrl == null ? 'Ajouter une photo' : 'Changer la photo',
+                  ),
+                ),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nom'),
+                ),
+                SpeciesDropdown(
+                  value: species,
+                  onChanged: (value) => setState(() => species = value),
+                ),
+                Autocomplete<String>(
+                  textEditingController: breedController,
+                  focusNode: breedFocusNode,
+                  optionsBuilder: (value) {
+                    final options = breedsForSpecies(species);
+                    final query = value.text.toLowerCase();
+                    if (query.isEmpty) return options;
+                    return options.where(
+                      (breed) => breed.toLowerCase().contains(query),
+                    );
+                  },
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onFieldSubmitted) {
+                        return TextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(labelText: 'Race'),
+                        );
+                      },
+                ),
+                ListTile(
+                  title: Text(
+                    birthDate == null
+                        ? 'Date de naissance (facultatif)'
+                        : 'Né(e) le ${dateOnly(birthDate!)}',
+                  ),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: sheetContext,
+                      initialDate: birthDate ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) setState(() => birthDate = picked);
+                  },
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (nameController.text.trim().isEmpty) return;
+                    final trimmedBreed = breedController.text.trim();
+                    final breed = trimmedBreed.isEmpty ? null : trimmedBreed;
+                    try {
+                      if (existing == null) {
+                        await ref
+                            .read(petsRepositoryProvider)
+                            .create(
+                              Pet(
+                                id: '',
+                                ownerId: '',
+                                name: nameController.text.trim(),
+                                species: species,
+                                breed: breed,
+                                birthDate: birthDate,
+                                photoUrl: photoUrl,
+                              ),
+                            );
+                      } else {
+                        await ref
+                            .read(petsRepositoryProvider)
+                            .update(
+                              Pet(
+                                id: existing.id,
+                                ownerId: existing.ownerId,
+                                name: nameController.text.trim(),
+                                species: species,
+                                breed: breed,
+                                birthDate: birthDate,
+                                photoUrl: photoUrl,
+                              ),
+                            );
+                      }
+                      ref.invalidate(petsProvider);
+                      if (sheetContext.mounted)
+                        Navigator.of(sheetContext).pop();
+                    } catch (error) {
+                      if (sheetContext.mounted) {
+                        ScaffoldMessenger.of(sheetContext).showSnackBar(
+                          SnackBar(content: Text('Erreur: $error')),
+                        );
+                      }
                     }
-                    ref.invalidate(petsProvider);
-                    if (sheetContext.mounted) Navigator.of(sheetContext).pop();
-                  } catch (error) {
-                    if (sheetContext.mounted) {
-                      ScaffoldMessenger.of(
-                        sheetContext,
-                      ).showSnackBar(SnackBar(content: Text('Erreur: $error')));
-                    }
-                  }
-                },
-                child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
-              ),
-            ],
+                  },
+                  child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
