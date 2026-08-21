@@ -49,17 +49,13 @@ class VetVisitsTab extends ConsumerWidget {
                 itemCount: visits.length,
                 itemBuilder: (context, index) {
                   final visit = visits[index];
-                  final nextVisit = visit.nextVisitDate;
                   return ListTile(
                     leading: const RecordLeadingIcon(
                       icon: Icons.local_hospital,
                       color: AppColors.primary,
                     ),
                     title: Text(visit.reason),
-                    subtitle: Text(
-                      'Le ${dateOnly(visit.visitDate)}'
-                      '${nextVisit != null ? ' · prochain RDV le ${dateOnly(nextVisit)}' : ''}',
-                    ),
+                    subtitle: Text('Le ${dateOnly(visit.visitDate)}'),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit),
                       onPressed: () =>
@@ -85,7 +81,6 @@ class VetVisitsTab extends ConsumerWidget {
       text: existing?.reason ?? '',
     );
     DateTime visitDate = existing?.visitDate ?? DateTime.now();
-    DateTime? nextVisitDate = existing?.nextVisitDate;
 
     showModalBottomSheet(
       context: context,
@@ -118,23 +113,6 @@ class VetVisitsTab extends ConsumerWidget {
                   if (picked != null) setState(() => visitDate = picked);
                 },
               ),
-              ListTile(
-                title: Text(
-                  nextVisitDate == null
-                      ? 'Pas de prochain RDV'
-                      : 'Prochain RDV le ${dateOnly(nextVisitDate!)}',
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: sheetContext,
-                    initialDate: nextVisitDate ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) setState(() => nextVisitDate = picked);
-                },
-              ),
               FilledButton(
                 onPressed: () async {
                   if (reasonController.text.trim().isEmpty) return;
@@ -148,7 +126,6 @@ class VetVisitsTab extends ConsumerWidget {
                               petId: petId,
                               visitDate: visitDate,
                               reason: reasonController.text.trim(),
-                              nextVisitDate: nextVisitDate,
                             ),
                           );
                     } else {
@@ -160,7 +137,6 @@ class VetVisitsTab extends ConsumerWidget {
                               petId: petId,
                               visitDate: visitDate,
                               reason: reasonController.text.trim(),
-                              nextVisitDate: nextVisitDate,
                               notes: existing.notes,
                             ),
                           );

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+- The separate "prochain RDV" (next visit) date on vet visits — it only
+  duplicated what a visit's own date already lets you express, and a new
+  visit with a future date now counts as an upcoming reminder on its own.
+
 ### Fixed
 - Pets, vaccinations, treatments, vet visits, and weight entries no longer
   show stale data from a previously signed-in account after switching

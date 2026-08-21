@@ -7,7 +7,6 @@ class VetVisit {
     required this.visitDate,
     required this.reason,
     this.notes,
-    this.nextVisitDate,
   });
 
   final String id;
@@ -15,7 +14,6 @@ class VetVisit {
   final DateTime visitDate;
   final String reason;
   final String? notes;
-  final DateTime? nextVisitDate;
 
   factory VetVisit.fromJson(Map<String, dynamic> json) => VetVisit(
         id: json['id'] as String,
@@ -23,8 +21,6 @@ class VetVisit {
         visitDate: DateTime.parse(json['visit_date'] as String),
         reason: json['reason'] as String,
         notes: json['notes'] as String?,
-        nextVisitDate:
-            json['next_visit_date'] == null ? null : DateTime.parse(json['next_visit_date'] as String),
       );
 
   Map<String, dynamic> toInsertJson() => {
@@ -32,6 +28,5 @@ class VetVisit {
         'visit_date': dateOnly(visitDate),
         'reason': reason,
         if (notes != null) 'notes': notes,
-        if (nextVisitDate != null) 'next_visit_date': dateOnly(nextVisitDate!),
       };
 }

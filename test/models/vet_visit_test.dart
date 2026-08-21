@@ -9,17 +9,14 @@ void main() {
       'visit_date': '2024-04-10',
       'reason': 'Contrôle annuel',
       'notes': 'RAS',
-      'next_visit_date': '2025-04-10',
     });
     expect(visit.reason, 'Contrôle annuel');
     expect(visit.visitDate, DateTime(2024, 4, 10));
-    expect(visit.nextVisitDate, DateTime(2025, 4, 10));
   });
 
   test('toInsertJson omits null optional fields', () {
     final visit = VetVisit(id: '', petId: 'p1', visitDate: DateTime(2024, 4, 10), reason: 'Contrôle annuel');
     final json = visit.toInsertJson();
     expect(json.containsKey('notes'), isFalse);
-    expect(json.containsKey('next_visit_date'), isFalse);
   });
 }
