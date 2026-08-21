@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -123,13 +124,44 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
         title: 'Aucun vétérinaire trouvé à proximité',
       );
     }
-    return ListView(
+    final center = _center!;
+    return Column(
       children: [
-        for (final clinic in _results!)
-          ListTile(
-            title: Text(clinic.name),
-            subtitle: Text([if (clinic.address != null) clinic.address!, clinic.formattedDistanceFrom(_center!)].join(' · ')),
+        SizedBox(
+          height: 240,
+          child: FlutterMap(
+            options: MapOptions(initialCenter: center, initialZoom: 13),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.pawfolio.pawfolio',
+              ),
+              MarkerLayer(
+                markers: [
+                  Marker(point: center, child: const Icon(Icons.my_location, color: Colors.blue)),
+                  for (final clinic in _results!)
+                    Marker(
+                      point: LatLng(clinic.latitude, clinic.longitude),
+                      child: const Icon(Icons.local_hospital, color: Colors.red),
+                    ),
+                ],
+              ),
+            ],
           ),
+        ),
+        Expanded(
+          child: ListView(
+            children: [
+              for (final clinic in _results!)
+                ListTile(
+                  title: Text(clinic.name),
+                  subtitle: Text(
+                    [if (clinic.address != null) clinic.address!, clinic.formattedDistanceFrom(center)].join(' · '),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }

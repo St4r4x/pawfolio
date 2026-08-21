@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -90,5 +91,41 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Aucun vétérinaire trouvé à proximité'), findsOneWidget);
+  });
+
+  testWidgets('renders a map alongside the results list', (tester) async {
+    final geocodingClient = MockClient(
+      (request) async => http.Response('[{"lat":"48.8566","lon":"2.3522","display_name":"Paris"}]', 200),
+    );
+    final vetClient = MockClient(
+      (request) async => http.Response(
+        '{"elements":[{"type":"node","id":1,"lat":48.857,"lon":2.353,"tags":{"name":"Clinique du Parc"}}]}',
+        200,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          geocodingServiceProvider.overrideWithValue(GeocodingService(client: geocodingClient)),
+          vetSearchServiceProvider.overrideWithValue(VetSearchService(client: vetClient)),
+        ],
+        child: const MaterialApp(home: VetsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '10 Rue de Rivoli, Paris');
+    await tester.tap(find.byIcon(Icons.search));
+    // A single pump, deliberately NOT pumpAndSettle: FlutterMap's TileLayer
+    // starts real network image requests for map tiles that never resolve
+    // inside flutter_test's controlled Zone, so pumpAndSettle would hang/time
+    // out waiting for them. One pump is enough to confirm the widget tree
+    // (map + list) is built; it does not need to wait for tile images to load.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byType(FlutterMap), findsOneWidget);
+    expect(find.text('Clinique du Parc'), findsOneWidget);
   });
 }
