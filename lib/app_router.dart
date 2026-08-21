@@ -19,6 +19,7 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/pet_detail/pet_detail_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/reminders/reminders_screen.dart';
+import 'screens/vets/vets_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshStream = GoRouterRefreshStream(
@@ -78,6 +79,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/reminders',
                 builder: (context, state) => const RemindersScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/vets',
+                builder: (context, state) => const VetsScreen(),
               ),
             ],
           ),

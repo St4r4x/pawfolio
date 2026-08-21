@@ -21,6 +21,11 @@ void main() {
               ),
               StatefulShellBranch(
                 routes: [
+                  GoRoute(path: '/vets', builder: (context, state) => const Text('Vets body')),
+                ],
+              ),
+              StatefulShellBranch(
+                routes: [
                   GoRoute(path: '/profile', builder: (context, state) => const Text('Profile body')),
                 ],
               ),

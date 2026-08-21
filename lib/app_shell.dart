@@ -17,6 +17,7 @@ class AppShell extends StatelessWidget {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.pets), label: 'Mes animaux'),
           NavigationDestination(icon: Icon(Icons.notifications), label: 'Rappels'),
+          NavigationDestination(icon: Icon(Icons.local_hospital), label: 'Vétérinaires'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profil'),
         ],
       ),

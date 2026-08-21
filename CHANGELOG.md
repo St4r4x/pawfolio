@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   old value.
 
 ### Added
+- Nearby veterinarians: a new "Vétérinaires" tab shows a map and list of
+  veterinary clinics near you — via GPS or a typed address — using free
+  OpenStreetMap data (Nominatim for geocoding, Overpass for clinic search).
+  No account, no API key.
 - Breed health predispositions: an info icon next to a pet's breed (when it
   has curated entries) opens a sheet listing known health predispositions
   for that breed — e.g. hip dysplasia in German Shepherds, brachycephalic
