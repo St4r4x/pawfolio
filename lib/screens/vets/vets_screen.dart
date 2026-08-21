@@ -17,6 +17,7 @@ class VetsScreen extends ConsumerStatefulWidget {
 
 class _VetsScreenState extends ConsumerState<VetsScreen> {
   final _addressController = TextEditingController();
+  final _mapController = MapController();
   bool _loading = false;
   String? _errorMessage;
   List<VetClinic>? _results;
@@ -130,6 +131,7 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
         SizedBox(
           height: 240,
           child: FlutterMap(
+            mapController: _mapController,
             options: MapOptions(initialCenter: center, initialZoom: 13),
             children: [
               TileLayer(
@@ -158,6 +160,7 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
                   subtitle: Text(
                     [if (clinic.address != null) clinic.address!, clinic.formattedDistanceFrom(center)].join(' · '),
                   ),
+                  onTap: () => _mapController.move(LatLng(clinic.latitude, clinic.longitude), 15),
                 ),
             ],
           ),

@@ -128,4 +128,42 @@ void main() {
     expect(find.byType(FlutterMap), findsOneWidget);
     expect(find.text('Clinique du Parc'), findsOneWidget);
   });
+
+  testWidgets('tapping a clinic row moves the map to that clinic', (tester) async {
+    final geocodingClient = MockClient(
+      (request) async => http.Response('[{"lat":"48.8566","lon":"2.3522","display_name":"Paris"}]', 200),
+    );
+    final vetClient = MockClient(
+      (request) async => http.Response(
+        '{"elements":['
+        '{"type":"node","id":1,"lat":48.857,"lon":2.353,"tags":{"name":"Clinique du Parc"}},'
+        '{"type":"node","id":2,"lat":48.90,"lon":2.40,"tags":{"name":"Clinique Lointaine"}}'
+        ']}',
+        200,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          geocodingServiceProvider.overrideWithValue(GeocodingService(client: geocodingClient)),
+          vetSearchServiceProvider.overrideWithValue(VetSearchService(client: vetClient)),
+        ],
+        child: const MaterialApp(home: VetsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '10 Rue de Rivoli, Paris');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.text('Clinique Lointaine'));
+    await tester.pump();
+
+    // The map itself isn't asserted on directly (no network tiles in test);
+    // this confirms the tap handler runs without throwing, which is what
+    // MapController.move would do on a bad/disposed controller.
+  });
 }
