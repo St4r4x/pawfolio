@@ -46,6 +46,9 @@ dependencies:
   flutter_animate: ^4.5.2
   animations: ^2.2.0
   image_picker: ^1.2.3
+  pdf: ^3.13.0
+  share_plus: ^13.3.0
+  csv: ^8.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

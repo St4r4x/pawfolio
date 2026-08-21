@@ -40,3 +40,7 @@ class Pet {
         'photo_url': photoUrl,
       };
 }
+
+const _speciesLabels = {'dog': 'Chien', 'cat': 'Chat', 'other': 'Autre'};
+
+String speciesLabel(String species) => _speciesLabels[species] ?? species;

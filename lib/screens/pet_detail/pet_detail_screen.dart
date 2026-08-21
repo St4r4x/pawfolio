@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../date_only.dart';
+import '../../export/pet_exporter.dart';
 import '../../models/pet.dart';
 import '../../providers/pets_provider.dart';
 import '../../theme.dart';
@@ -11,7 +12,11 @@ import 'widgets/vaccinations_tab.dart';
 import 'widgets/vet_visits_tab.dart';
 import 'widgets/weight_tab.dart';
 
-const _speciesLabels = {'dog': 'Chien', 'cat': 'Chat', 'other': 'Autre'};
+const _exportOptions = [
+  (icon: Icons.picture_as_pdf, label: 'Exporter en PDF', format: 'pdf'),
+  (icon: Icons.table_chart, label: 'Exporter en CSV', format: 'csv'),
+  (icon: Icons.data_object, label: 'Exporter en JSON', format: 'json'),
+];
 
 Pet? _findPet(List<Pet> pets, String petId) {
   for (final pet in pets) {
@@ -48,6 +53,14 @@ class PetDetailScreen extends ConsumerWidget {
               Text(pet?.name ?? 'Animal'),
             ],
           ),
+          actions: [
+            if (pet != null)
+              IconButton(
+                icon: const Icon(Icons.ios_share),
+                tooltip: 'Exporter',
+                onPressed: () => _showExportSheet(context, ref, pet),
+              ),
+          ],
           bottom: TabBar(
             indicatorColor: AppColors.primary,
             indicatorWeight: 3,
@@ -67,7 +80,7 @@ class PetDetailScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_speciesLabels[pet.species] ?? pet.species),
+                    Text(speciesLabel(pet.species)),
                     if (pet.breed != null) Text(pet.breed!),
                     if (pet.birthDate != null) Text('Né(e) le ${dateOnly(pet.birthDate!)}'),
                   ],
@@ -88,4 +101,32 @@ class PetDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showExportSheet(BuildContext context, WidgetRef ref, Pet pet) {
+  showModalBottomSheet(
+    context: context,
+    builder: (sheetContext) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final option in _exportOptions)
+            ListTile(
+              leading: Icon(option.icon),
+              title: Text(option.label),
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                try {
+                  await ref.read(petExporterProvider)(pet, option.format);
+                } catch (error) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur export: $error')));
+                  }
+                }
+              },
+            ),
+        ],
+      ),
+    ),
+  );
 }

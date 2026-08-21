@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   old value.
 
 ### Added
+- Export a pet's health record from the pet detail screen (share icon):
+  a printable PDF summary, or a full CSV/JSON copy of its vaccinations,
+  treatments, weight entries, and vet visits, handed off to the OS/browser's
+  share or download flow.
 - Species-specific dog/cat icons on pet avatars (in place of the single
   generic paw icon), a breed autocomplete with curated dog/cat breed
   suggestions (still free text for anything not listed, or for other
