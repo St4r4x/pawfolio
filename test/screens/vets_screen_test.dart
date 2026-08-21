@@ -47,4 +47,48 @@ void main() {
 
     expect(find.text('Clinique du Parc'), findsOneWidget);
   });
+
+  testWidgets('shows an explicit error when the address has no match', (tester) async {
+    final geocodingClient = MockClient((request) async => http.Response('[]', 200));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          geocodingServiceProvider.overrideWithValue(GeocodingService(client: geocodingClient)),
+        ],
+        child: const MaterialApp(home: VetsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'nowhere at all');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Adresse introuvable.'), findsOneWidget);
+  });
+
+  testWidgets('shows the empty state when the search finds no clinics', (tester) async {
+    final geocodingClient = MockClient(
+      (request) async => http.Response('[{"lat":"48.8566","lon":"2.3522","display_name":"Paris"}]', 200),
+    );
+    final vetClient = MockClient((request) async => http.Response('{"elements":[]}', 200));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          geocodingServiceProvider.overrideWithValue(GeocodingService(client: geocodingClient)),
+          vetSearchServiceProvider.overrideWithValue(VetSearchService(client: vetClient)),
+        ],
+        child: const MaterialApp(home: VetsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '10 Rue de Rivoli, Paris');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aucun vétérinaire trouvé à proximité'), findsOneWidget);
+  });
 }
