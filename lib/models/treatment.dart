@@ -9,6 +9,7 @@ class Treatment {
     required this.dateGiven,
     this.nextDueDate,
     this.notes,
+    this.reference,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class Treatment {
   final DateTime dateGiven;
   final DateTime? nextDueDate;
   final String? notes;
+  final String? reference;
 
   factory Treatment.fromJson(Map<String, dynamic> json) => Treatment(
         id: json['id'] as String,
@@ -27,6 +29,7 @@ class Treatment {
         dateGiven: DateTime.parse(json['date_given'] as String),
         nextDueDate: json['next_due_date'] == null ? null : DateTime.parse(json['next_due_date'] as String),
         notes: json['notes'] as String?,
+        reference: json['reference'] as String?,
       );
 
   Map<String, dynamic> toInsertJson() => {
@@ -36,5 +39,9 @@ class Treatment {
         'date_given': dateOnly(dateGiven),
         if (nextDueDate != null) 'next_due_date': dateOnly(nextDueDate!),
         if (notes != null) 'notes': notes,
+        // Unlike notes/nextDueDate above, always sent (even null): toInsertJson
+        // is reused for update(), and an omitted key would leave a previously
+        // scanned reference stuck instead of letting it be cleared.
+        'reference': reference,
       };
 }

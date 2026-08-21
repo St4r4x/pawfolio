@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   old value.
 
 ### Added
+- Barcode scanner on the treatment add/edit sheet: scan a medication's
+  barcode to fill in a reference field, with the product name suggested
+  automatically when the barcode is recognized (from a local cache of past
+  scans, then a public product lookup) — otherwise the name is still typed
+  by hand, same as before.
 - Export a pet's health record from the pet detail screen (share icon):
   a printable PDF summary, or a full CSV/JSON copy of its vaccinations,
   treatments, weight entries, and vet visits, handed off to the OS/browser's

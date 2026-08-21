@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../barcode/barcode_prefill.dart';
+import '../../../barcode/barcode_scanner_page.dart';
 import '../../../date_only.dart';
 import '../../../models/treatment.dart';
+import '../../../providers/barcode_providers.dart';
 import '../../../providers/treatments_provider.dart';
 import '../../../theme.dart';
 import '../../../widgets/empty_state.dart';
@@ -92,6 +95,7 @@ class TreatmentsTab extends ConsumerWidget {
     Treatment? existing,
   }) {
     final nameController = TextEditingController(text: existing?.name ?? '');
+    final referenceController = TextEditingController(text: existing?.reference ?? '');
     String type = existing?.type ?? 'dewormer';
     DateTime dateGiven = existing?.dateGiven ?? DateTime.now();
     DateTime? nextDueDate = existing?.nextDueDate;
@@ -114,6 +118,29 @@ class TreatmentsTab extends ConsumerWidget {
                 controller: nameController,
                 decoration: const InputDecoration(
                   labelText: 'Nom du traitement',
+                ),
+              ),
+              TextField(
+                controller: referenceController,
+                decoration: InputDecoration(
+                  labelText: 'Référence (code-barres)',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.qr_code_scanner),
+                    tooltip: 'Scanner un code-barres',
+                    onPressed: () async {
+                      final code = await Navigator.of(sheetContext).push<String>(
+                        MaterialPageRoute(builder: (_) => const BarcodeScannerPage()),
+                      );
+                      if (code == null) return;
+                      await applyScannedBarcode(
+                        code: code,
+                        nameController: nameController,
+                        referenceController: referenceController,
+                        cache: ref.read(barcodeNameCacheProvider),
+                        lookupService: ref.read(barcodeLookupServiceProvider),
+                      );
+                    },
+                  ),
                 ),
               ),
               DropdownButton<String>(
@@ -161,6 +188,8 @@ class TreatmentsTab extends ConsumerWidget {
               FilledButton(
                 onPressed: () async {
                   if (nameController.text.trim().isEmpty) return;
+                  final trimmedReference = referenceController.text.trim();
+                  final reference = trimmedReference.isEmpty ? null : trimmedReference;
                   try {
                     if (existing == null) {
                       await ref
@@ -173,6 +202,7 @@ class TreatmentsTab extends ConsumerWidget {
                               name: nameController.text.trim(),
                               dateGiven: dateGiven,
                               nextDueDate: nextDueDate,
+                              reference: reference,
                             ),
                           );
                     } else {
@@ -187,6 +217,7 @@ class TreatmentsTab extends ConsumerWidget {
                               dateGiven: dateGiven,
                               nextDueDate: nextDueDate,
                               notes: existing.notes,
+                              reference: reference,
                             ),
                           );
                     }

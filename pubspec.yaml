@@ -49,6 +49,8 @@ dependencies:
   pdf: ^3.13.0
   share_plus: ^13.3.0
   csv: ^8.0.0
+  mobile_scanner: ^7.4.0
+  http: ^1.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
