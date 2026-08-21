@@ -55,6 +55,7 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
     if (address.isEmpty) return;
     setState(() => _state = const _Loading());
     final coords = await ref.read(geocodingServiceProvider).geocode(address);
+    if (!mounted) return;
     if (coords == null) {
       setState(() => _state = const _Failure('Adresse introuvable.'));
       return;
