@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/breed_predispositions.dart';
 import '../../date_only.dart';
 import '../../export/pet_exporter.dart';
 import '../../models/pet.dart';
 import '../../providers/pets_provider.dart';
 import '../../theme.dart';
 import '../../widgets/pet_avatar.dart';
+import '../../widgets/record_leading_icon.dart';
 import 'widgets/treatments_tab.dart';
 import 'widgets/vaccinations_tab.dart';
 import 'widgets/vet_visits_tab.dart';
@@ -17,6 +19,10 @@ const _exportOptions = [
   (icon: Icons.table_chart, label: 'Exporter en CSV', format: 'csv'),
   (icon: Icons.data_object, label: 'Exporter en JSON', format: 'json'),
 ];
+
+const _predispositionsDisclaimer =
+    'Informations générales sur la race, à titre indicatif — '
+    'ne remplacent pas l\'avis d\'un vétérinaire.';
 
 Pet? _findPet(List<Pet> pets, String petId) {
   for (final pet in pets) {
@@ -81,7 +87,7 @@ class PetDetailScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(speciesLabel(pet.species)),
-                    if (pet.breed != null) Text(pet.breed!),
+                    if (pet.breed != null) _BreedRow(breed: pet.breed!),
                     if (pet.birthDate != null) Text('Né(e) le ${dateOnly(pet.birthDate!)}'),
                   ],
                 ),
@@ -101,6 +107,64 @@ class PetDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _BreedRow extends StatelessWidget {
+  const _BreedRow({required this.breed});
+
+  final String breed;
+
+  @override
+  Widget build(BuildContext context) {
+    final predispositions = predispositionsForBreed(breed);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(breed),
+        if (predispositions.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Prédispositions de la race',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => _showPredispositionsSheet(context, breed, predispositions),
+          ),
+      ],
+    );
+  }
+}
+
+void _showPredispositionsSheet(BuildContext context, String breed, List<BreedPredisposition> predispositions) {
+  showModalBottomSheet(
+    context: context,
+    builder: (sheetContext) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        children: [
+          Text(breed, style: Theme.of(sheetContext).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          for (final predisposition in predispositions)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const RecordLeadingIcon(
+                icon: Icons.health_and_safety_outlined,
+                color: AppColors.warningDueSoon,
+              ),
+              title: Text(predisposition.condition),
+              subtitle: Text(predisposition.note),
+            ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              _predispositionsDisclaimer,
+              style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 void _showExportSheet(BuildContext context, WidgetRef ref, Pet pet) {
