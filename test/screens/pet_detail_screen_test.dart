@@ -88,4 +88,74 @@ void main() {
 
     expect(requestedFormat, 'csv');
   });
+
+  testWidgets('shows a predispositions info icon for a breed with curated entries', (tester) async {
+    final pets = [
+      const Pet(id: 'p1', ownerId: 'u1', name: 'Rex', species: 'dog', breed: 'Labrador'),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsProvider.overrideWith((ref) async => pets),
+          vaccinationsProvider('p1').overrideWith((ref) async => []),
+          weightEntriesProvider('p1').overrideWith((ref) async => []),
+          treatmentsProvider('p1').overrideWith((ref) async => []),
+          vetVisitsProvider('p1').overrideWith((ref) async => []),
+        ],
+        child: const MaterialApp(home: PetDetailScreen(petId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.info_outline), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.info_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dysplasie de la hanche'), findsOneWidget);
+    expect(find.textContaining('ne remplacent pas l\'avis d\'un vétérinaire'), findsOneWidget);
+  });
+
+  testWidgets('hides the predispositions info icon for a breed with no curated entry', (tester) async {
+    final pets = [
+      const Pet(id: 'p1', ownerId: 'u1', name: 'Rex', species: 'dog', breed: 'Bâtard'),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsProvider.overrideWith((ref) async => pets),
+          vaccinationsProvider('p1').overrideWith((ref) async => []),
+          weightEntriesProvider('p1').overrideWith((ref) async => []),
+          treatmentsProvider('p1').overrideWith((ref) async => []),
+          vetVisitsProvider('p1').overrideWith((ref) async => []),
+        ],
+        child: const MaterialApp(home: PetDetailScreen(petId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.info_outline), findsNothing);
+  });
+
+  testWidgets('hides the predispositions info icon when the pet has no breed', (tester) async {
+    final pets = [const Pet(id: 'p1', ownerId: 'u1', name: 'Rex', species: 'dog')];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          petsProvider.overrideWith((ref) async => pets),
+          vaccinationsProvider('p1').overrideWith((ref) async => []),
+          weightEntriesProvider('p1').overrideWith((ref) async => []),
+          treatmentsProvider('p1').overrideWith((ref) async => []),
+          vetVisitsProvider('p1').overrideWith((ref) async => []),
+        ],
+        child: const MaterialApp(home: PetDetailScreen(petId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.info_outline), findsNothing);
+  });
 }

@@ -23,6 +23,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   old value.
 
 ### Added
+- Breed health predispositions: an info icon next to a pet's breed (when it
+  has curated entries) opens a sheet listing known health predispositions
+  for that breed — e.g. hip dysplasia in German Shepherds, brachycephalic
+  airway issues in Bulldogs/Persians — from a small embedded reference
+  dataset, with a disclaimer that it doesn't replace veterinary advice.
 - Barcode scanner on the treatment add/edit sheet: scan a medication's
   barcode to fill in a reference field, with the product name suggested
   automatically when the barcode is recognized (from a local cache of past
