@@ -860,6 +860,21 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<LocationState>(locationProvider, (previous, next) {
+      if (next.status == LocationStatus.granted && next.position != null) {
+        _searchNear(next.position!);
+      } else if (next.status == LocationStatus.denied || next.status == LocationStatus.error) {
+        setState(() {
+          _loading = false;
+          _errorMessage = next.errorMessage;
+        });
+      } else if (next.status == LocationStatus.loading) {
+        setState(() {
+          _loading = true;
+          _errorMessage = null;
+        });
+      }
+    });
     return Scaffold(
       appBar: AppBar(title: const Text('Vétérinaires')),
       body: Column(
@@ -1293,9 +1308,10 @@ flutter test
 flutter analyze lib/
 ```
 
-Expected: all tests pass (142 at this point: 136 before this plan + 6 in
-`vets_screen_test.dart`); `flutter analyze` shows the same pre-existing 12 `info`
-issues, no new ones.
+Expected: all tests pass (157 at this point: 136 before this plan + 5 in
+`vet_clinic_test.dart` + 5 in `geocoding_service_test.dart` + 5 in
+`vet_search_service_test.dart` + 6 in `vets_screen_test.dart`); `flutter analyze`
+shows the same pre-existing 12 `info` issues, no new ones.
 
 - [ ] **Step 4: Commit**
 
@@ -1496,37 +1512,13 @@ gh auth switch --user St4r4x-NV
 - **Type consistency checked:** `VetClinic` (Task 3) → consumed identically by
   `VetSearchService` (Task 5, `distanceMetersFrom`/`fromOverpassElement`) and
   `VetsScreen` (Task 8, `formattedDistanceFrom`, `.name`, `.address`,
-  `.latitude`/`.longitude`). `LocationState`/`LocationStatus` (Task 7) aren't
-  actually consumed by `VetsScreen`'s Task 8 code as written — `VetsScreen` calls
-  `ref.read(locationProvider.notifier).useCurrentPosition()` but doesn't `watch`
-  `locationProvider` to react to its result. **This is a real gap**, not a typo:
-  Task 8 as written lets the user tap the locate-me button, but the resulting
-  `LocationState.granted(position)` never triggers `_searchNear`. Fixed by adding
-  a `ref.listen(locationProvider, ...)` in `VetsScreen`'s `build()` — see the
-  addendum below.
-
-### Addendum: wiring `locationProvider` into `VetsScreen` (Cycle 1, Step 3, corrected)
-
-Add inside `build()`, before the `return Scaffold(...)`:
-
-```dart
-    ref.listen<LocationState>(locationProvider, (previous, next) {
-      if (next.status == LocationStatus.granted && next.position != null) {
-        _searchNear(next.position!);
-      } else if (next.status == LocationStatus.denied || next.status == LocationStatus.error) {
-        setState(() {
-          _loading = false;
-          _errorMessage = next.errorMessage;
-        });
-      } else if (next.status == LocationStatus.loading) {
-        setState(() {
-          _loading = true;
-          _errorMessage = null;
-        });
-      }
-    });
-```
-
-This isn't separately unit-tested (same reasoning as the rest of `location_provider.dart`'s
-GPS path — see Global Constraints), but it's exercised by every manual
-verification step in Task 10 that taps the locate-me button.
+  `.latitude`/`.longitude`). `LocationState`/`LocationStatus` (Task 7) are
+  consumed by `VetsScreen` (Task 8) via a `ref.listen<LocationState>(locationProvider,
+  ...)` call at the top of `build()`, wired directly into Task 8 Cycle 1's code
+  (an earlier draft of this plan left that wiring in a trailing addendum after
+  Task 14, where a per-task implementer would never see it — caught and fixed
+  in place during the plan's own pre-flight review, before dispatch). Without
+  it, tapping the locate-me button would silently do nothing after a granted
+  position — that failure mode is now exercised by Task 10's manual
+  verification, which taps the button and expects the denied-state copy to
+  appear (the only reachable state in the sandboxed browser).
