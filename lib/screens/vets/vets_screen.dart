@@ -26,6 +26,7 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
   @override
   void dispose() {
     _addressController.dispose();
+    _mapController.dispose();
     super.dispose();
   }
 

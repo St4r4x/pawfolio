@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:pawfolio/providers/vet_search_providers.dart';
 import 'package:pawfolio/screens/vets/vets_screen.dart';
 import 'package:pawfolio/vets/geocoding_service.dart';
