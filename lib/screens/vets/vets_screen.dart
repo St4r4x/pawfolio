@@ -3,10 +3,33 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../models/vet_clinic.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/vet_search_providers.dart';
+import '../../vets/vet_clinic.dart';
 import '../../widgets/empty_state.dart';
+
+sealed class _VetsSearchState {
+  const _VetsSearchState();
+}
+
+class _Idle extends _VetsSearchState {
+  const _Idle();
+}
+
+class _Loading extends _VetsSearchState {
+  const _Loading();
+}
+
+class _Failure extends _VetsSearchState {
+  const _Failure(this.message);
+  final String message;
+}
+
+class _Success extends _VetsSearchState {
+  const _Success({required this.center, required this.clinics});
+  final LatLng center;
+  final List<VetClinic> clinics;
+}
 
 class VetsScreen extends ConsumerStatefulWidget {
   const VetsScreen({super.key});
@@ -18,10 +41,7 @@ class VetsScreen extends ConsumerStatefulWidget {
 class _VetsScreenState extends ConsumerState<VetsScreen> {
   final _addressController = TextEditingController();
   final _mapController = MapController();
-  bool _loading = false;
-  String? _errorMessage;
-  List<VetClinic>? _results;
-  LatLng? _center;
+  _VetsSearchState _state = const _Idle();
 
   @override
   void dispose() {
@@ -33,51 +53,35 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
   Future<void> _searchAddress() async {
     final address = _addressController.text.trim();
     if (address.isEmpty) return;
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-      _results = null;
-    });
+    setState(() => _state = const _Loading());
     final coords = await ref.read(geocodingServiceProvider).geocode(address);
     if (coords == null) {
-      setState(() {
-        _loading = false;
-        _errorMessage = 'Adresse introuvable.';
-      });
+      setState(() => _state = const _Failure('Adresse introuvable.'));
       return;
     }
     await _searchNear(coords);
   }
 
   Future<void> _searchNear(LatLng center) async {
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-      _center = center;
-    });
+    setState(() => _state = const _Loading());
     final clinics = await ref.read(vetSearchServiceProvider).nearby(center);
     if (!mounted) return;
-    setState(() {
-      _loading = false;
-      _results = clinics;
-    });
+    setState(() => _state = _Success(center: center, clinics: clinics));
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<LocationState>(locationProvider, (previous, next) {
-      if (next.status == LocationStatus.granted && next.position != null) {
-        _searchNear(next.position!);
-      } else if (next.status == LocationStatus.denied || next.status == LocationStatus.error) {
-        setState(() {
-          _loading = false;
-          _errorMessage = next.errorMessage;
-        });
-      } else if (next.status == LocationStatus.loading) {
-        setState(() {
-          _loading = true;
-          _errorMessage = null;
-        });
+      switch (next.status) {
+        case LocationStatus.granted:
+          if (next.position != null) _searchNear(next.position!);
+        case LocationStatus.denied:
+        case LocationStatus.error:
+          setState(() => _state = _Failure(next.errorMessage ?? 'Erreur de localisation.'));
+        case LocationStatus.loading:
+          setState(() => _state = const _Loading());
+        case LocationStatus.idle:
+          break;
       }
     });
     return Scaffold(
@@ -114,20 +118,15 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
     );
   }
 
-  Widget _buildBody() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_errorMessage != null) return Center(child: Text(_errorMessage!));
-    if (_results == null) {
-      return const Center(child: Text('Cherche des vétérinaires près de chez toi.'));
-    }
-    if (_results!.isEmpty) {
-      return const EmptyState(
-        illustration: Icon(Icons.location_off_outlined, size: 64),
-        title: 'Aucun vétérinaire trouvé à proximité',
-      );
-    }
-    final center = _center!;
-    return Column(
+  Widget _buildBody() => switch (_state) {
+    _Idle() => const Center(child: Text('Cherche des vétérinaires près de chez toi.')),
+    _Loading() => const Center(child: CircularProgressIndicator()),
+    _Failure(:final message) => Center(child: Text(message)),
+    _Success(:final clinics) when clinics.isEmpty => const EmptyState(
+      illustration: Icon(Icons.location_off_outlined, size: 64),
+      title: 'Aucun vétérinaire trouvé à proximité',
+    ),
+    _Success(:final center, :final clinics) => Column(
       children: [
         SizedBox(
           height: 240,
@@ -142,7 +141,7 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
               MarkerLayer(
                 markers: [
                   Marker(point: center, child: const Icon(Icons.my_location, color: Colors.blue)),
-                  for (final clinic in _results!)
+                  for (final clinic in clinics)
                     Marker(
                       point: LatLng(clinic.latitude, clinic.longitude),
                       child: const Icon(Icons.local_hospital, color: Colors.red),
@@ -153,20 +152,21 @@ class _VetsScreenState extends ConsumerState<VetsScreen> {
           ),
         ),
         Expanded(
-          child: ListView(
-            children: [
-              for (final clinic in _results!)
-                ListTile(
-                  title: Text(clinic.name),
-                  subtitle: Text(
-                    [if (clinic.address != null) clinic.address!, clinic.formattedDistanceFrom(center)].join(' · '),
-                  ),
-                  onTap: () => _mapController.move(LatLng(clinic.latitude, clinic.longitude), 15),
+          child: ListView.builder(
+            itemCount: clinics.length,
+            itemBuilder: (context, index) {
+              final clinic = clinics[index];
+              return ListTile(
+                title: Text(clinic.name),
+                subtitle: Text(
+                  [if (clinic.address != null) clinic.address!, clinic.formattedDistanceFrom(center)].join(' · '),
                 ),
-            ],
+                onTap: () => _mapController.move(LatLng(clinic.latitude, clinic.longitude), 15),
+              );
+            },
           ),
         ),
       ],
-    );
-  }
+    ),
+  };
 }

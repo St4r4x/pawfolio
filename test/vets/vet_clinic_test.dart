@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:pawfolio/models/vet_clinic.dart';
+import 'package:pawfolio/vets/vet_clinic.dart';
 
 void main() {
   test('fromOverpassElement parses name, address, and coordinates', () {
