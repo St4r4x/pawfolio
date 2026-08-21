@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   visit with a future date now counts as an upcoming reminder on its own.
 
 ### Fixed
+- Tracked the `web/` platform folder (`index.html`, manifest, icons) in git
+  — it existed locally but was never committed, so a fresh clone or worktree
+  couldn't run the app on the web target at all.
 - Pets, vaccinations, treatments, vet visits, and weight entries no longer
   show stale data from a previously signed-in account after switching
   accounts within the same running session.
