@@ -32,6 +32,22 @@ class VetClinic {
     );
   }
 
+  factory VetClinic.fromSireneEtablissement(Map<String, dynamic> etablissement, {required String fallbackName}) {
+    final enseignes = (etablissement['liste_enseignes'] as List<dynamic>?)?.whereType<String>();
+    final name =
+        (enseignes?.isNotEmpty ?? false)
+            ? enseignes!.first
+            : etablissement['nom_commercial'] as String? ?? fallbackName;
+
+    return VetClinic(
+      id: 'siret/${etablissement['siret']}',
+      name: name,
+      latitude: double.parse(etablissement['latitude'] as String),
+      longitude: double.parse(etablissement['longitude'] as String),
+      address: etablissement['adresse'] as String?,
+    );
+  }
+
   double distanceMetersFrom(LatLng origin) =>
       const Distance().distance(origin, LatLng(latitude, longitude));
 
