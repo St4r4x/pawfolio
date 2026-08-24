@@ -59,4 +59,45 @@ void main() {
     expect(near.formattedDistanceFrom(origin), '0 m');
     expect(far.formattedDistanceFrom(origin), endsWith(' km'));
   });
+
+  test('fromSireneEtablissement prefers the enseigne as the name', () {
+    final clinic = VetClinic.fromSireneEtablissement({
+      'siret': '48748185500012',
+      'adresse': '15 RUE LA BOETIE 75008 PARIS',
+      'latitude': '48.873989063',
+      'longitude': '2.3176677422',
+      'liste_enseignes': ['CLINIQUE VETERINAIRE LA BOETIE'],
+      'nom_commercial': null,
+    }, fallbackName: 'FAMILYVETS');
+
+    expect(clinic.id, 'siret/48748185500012');
+    expect(clinic.name, 'CLINIQUE VETERINAIRE LA BOETIE');
+    expect(clinic.latitude, 48.873989063);
+    expect(clinic.longitude, 2.3176677422);
+    expect(clinic.address, '15 RUE LA BOETIE 75008 PARIS');
+  });
+
+  test('fromSireneEtablissement falls back to nom_commercial when there is no enseigne', () {
+    final clinic = VetClinic.fromSireneEtablissement({
+      'siret': '1',
+      'adresse': null,
+      'latitude': '1.0',
+      'longitude': '2.0',
+      'liste_enseignes': null,
+      'nom_commercial': 'Clinique du Chat Botté',
+    }, fallbackName: 'FAMILYVETS');
+
+    expect(clinic.name, 'Clinique du Chat Botté');
+    expect(clinic.address, isNull);
+  });
+
+  test('fromSireneEtablissement falls back to the legal-unit name when no enseigne or nom_commercial', () {
+    final clinic = VetClinic.fromSireneEtablissement({
+      'siret': '1',
+      'latitude': '1.0',
+      'longitude': '2.0',
+    }, fallbackName: 'FAMILYVETS');
+
+    expect(clinic.name, 'FAMILYVETS');
+  });
 }

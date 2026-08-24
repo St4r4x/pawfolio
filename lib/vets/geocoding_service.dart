@@ -35,4 +35,23 @@ class GeocodingService {
       return null;
     }
   }
+
+  Future<String?> reverseGeocode(LatLng point) async {
+    final uri = Uri.https('nominatim.openstreetmap.org', '/reverse', {
+      'lat': '${point.latitude}',
+      'lon': '${point.longitude}',
+      'format': 'json',
+    });
+    try {
+      final response = await _client
+          .get(uri, headers: {'User-Agent': 'Pawfolio/1.0 (+https://github.com/St4r4x/pawfolio)'})
+          .timeout(timeout);
+      if (response.statusCode != 200) return null;
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final address = body['address'] as Map<String, dynamic>?;
+      return address?['postcode'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
 }
